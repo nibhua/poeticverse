@@ -22,6 +22,15 @@ interface UserPost {
   username: string;
 }
 
+interface PostResponse {
+  id: string;
+  content_text: string;
+  created_at: string;
+  profiles: {
+    username: string;
+  };
+}
+
 const Profile = () => {
   const { username } = useParams();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -49,7 +58,16 @@ const Profile = () => {
           .order("created_at", { ascending: false });
 
         if (postsError) throw postsError;
-        setPosts(postsData);
+        
+        // Transform the posts data to match UserPost interface
+        const transformedPosts: UserPost[] = (postsData as PostResponse[]).map(post => ({
+          id: post.id,
+          content_text: post.content_text || "",
+          created_at: post.created_at,
+          username: post.profiles.username
+        }));
+        
+        setPosts(transformedPosts);
 
         // Fetch followers count
         const { count: followers, error: followersError } = await supabase
