@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,44 @@ const CreatePost = () => {
   const navigate = useNavigate();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkAndCreateProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check if profile exists
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select()
+          .eq("id", user.id)
+          .single();
+
+        // If no profile exists, create one
+        if (!profile) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              username: user.email?.split("@")[0] || "user_" + Math.random().toString(36).slice(2, 7),
+              full_name: user.user_metadata.full_name || null
+            });
+
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+            toast.error("Error setting up your profile");
+            return;
+          }
+        }
+      } catch (error: any) {
+        console.error("Error checking profile:", error);
+        toast.error("Error checking your profile");
+      }
+    };
+
+    checkAndCreateProfile();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
