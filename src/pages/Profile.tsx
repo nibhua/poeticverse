@@ -38,6 +38,8 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
+        console.log("Fetching profile data for username:", username);
+        
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
         
@@ -49,10 +51,12 @@ const Profile = () => {
           .single();
 
         if (profileError) {
+          console.error("Profile error:", profileError);
           toast.error("Error loading profile");
           return;
         }
 
+        console.log("Profile data:", profileData);
         setProfile(profileData);
         setIsCurrentUser(user?.id === profileData.id);
 
@@ -64,10 +68,12 @@ const Profile = () => {
           .order("created_at", { ascending: false });
 
         if (postsError) {
+          console.error("Posts error:", postsError);
           toast.error("Error loading posts");
           return;
         }
 
+        console.log("Posts data:", postsData);
         setPosts(postsData || []);
 
         // Fetch followers count
