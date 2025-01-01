@@ -76,7 +76,7 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
 
   return (
     <div className="border-t border-gray-200">
-      {(postsWithLikes || posts).map((post) => (
+      {(postsWithLikes || posts).map((post: PostType | PostWithCounts) => (
         <Post
           key={post.id}
           postId={post.id}
@@ -84,8 +84,8 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
           content={post.content_text || post.caption || ""}
           timestamp={new Date(post.created_at).toLocaleDateString()}
           imageUrl={post.image_url}
-          likes={'likes' in post ? post.likes : 0}
-          comments={'comments' in post ? post.comments : 0}
+          likes={'likes' in post ? (post as PostWithCounts).likes : 0}
+          comments={'comments' in post ? (post as PostWithCounts).comments : 0}
         />
       ))}
     </div>
