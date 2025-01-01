@@ -1,8 +1,30 @@
 import { Home, Search, PlusSquare, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const BottomNav = () => {
   const location = useLocation();
+  const [username, setUsername] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const getProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+        
+        if (data) {
+          setUsername(data.username);
+        }
+      }
+    };
+    
+    getProfile();
+  }, []);
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -23,7 +45,10 @@ export const BottomNav = () => {
           <PlusSquare size={24} />
           <span className="text-xs mt-1">Post</span>
         </Link>
-        <Link to="/profile" className={`flex flex-col items-center ${isActive('/profile') ? 'text-social-primary' : 'text-gray-500'}`}>
+        <Link 
+          to={username ? `/profile/${username}` : "#"} 
+          className={`flex flex-col items-center ${isActive(`/profile/${username}`) ? 'text-social-primary' : 'text-gray-500'}`}
+        >
           <User size={24} />
           <span className="text-xs mt-1">Profile</span>
         </Link>
