@@ -10,6 +10,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import Search from "./pages/Search";
 import CreatePost from "./pages/CreatePost";
 
@@ -65,6 +66,10 @@ const App = () => {
               <Route
                 path="/profile/:username"
                 element={session ? <Profile /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/profile/:username/edit"
+                element={session ? <EditProfile /> : <Navigate to="/login" />}
               />
               <Route
                 path="/search"
