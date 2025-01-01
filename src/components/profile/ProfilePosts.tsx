@@ -21,6 +21,14 @@ interface PostWithCounts extends PostType {
   comments: number;
 }
 
+interface LikeRecord {
+  post_id: string;
+}
+
+interface CommentRecord {
+  post_id: string;
+}
+
 export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
   const { data: postsWithLikes } = useQuery({
     queryKey: ['posts-with-likes', posts.map(p => p.id)],
@@ -33,7 +41,7 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
 
       if (error) throw error;
 
-      const likesCount = likes?.reduce((acc, curr) => {
+      const likesCount = (likes as LikeRecord[] | null)?.reduce((acc, curr) => {
         acc[curr.post_id] = (acc[curr.post_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
@@ -45,7 +53,7 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
 
       if (commentsError) throw commentsError;
 
-      const commentsCount = comments?.reduce((acc, curr) => {
+      const commentsCount = (comments as CommentRecord[] | null)?.reduce((acc, curr) => {
         acc[curr.post_id] = (acc[curr.post_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
