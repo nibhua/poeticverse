@@ -4,7 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 const Index = () => {
   const posts = [
     {
-      postId: "1", // Added postId
+      postId: "123e4567-e89b-12d3-a456-426614174000",
       username: "johndoe",
       content: "Just launched my new project! Super excited to share it with everyone. #coding #webdev",
       timestamp: "2h ago",
@@ -12,7 +12,7 @@ const Index = () => {
       comments: 7,
     },
     {
-      postId: "2", // Added postId
+      postId: "123e4567-e89b-12d3-a456-426614174001",
       username: "techie_sarah",
       content: "Beautiful day for some outdoor coding ☀️ #remotework",
       timestamp: "4h ago",
@@ -20,7 +20,7 @@ const Index = () => {
       comments: 3,
     },
     {
-      postId: "3", // Added postId
+      postId: "123e4567-e89b-12d3-a456-426614174002",
       username: "dev_mike",
       content: "Who else is learning React in 2024? Share your experience below! 👇 #reactjs #javascript",
       timestamp: "6h ago",
