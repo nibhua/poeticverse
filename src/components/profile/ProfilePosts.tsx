@@ -14,6 +14,11 @@ interface ProfilePostsProps {
   username: string;
 }
 
+interface PostWithCounts extends ProfilePostsProps['posts'][0] {
+  likes: number;
+  comments: number;
+}
+
 export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
   const { data: postsWithLikes } = useQuery({
     queryKey: ['posts-with-likes', posts.map(p => p.id)],
@@ -47,7 +52,7 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
         ...post,
         likes: likesCount[post.id] || 0,
         comments: commentsCount[post.id] || 0,
-      }));
+      })) as PostWithCounts[];
     },
   });
 
