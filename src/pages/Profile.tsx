@@ -128,6 +128,7 @@ const Profile = () => {
           followingCount={followingCount}
           postsCount={posts.length}
           isCurrentUser={isCurrentUser}
+          userId={profile.id} // Added userId prop
         />
         
         {postsLoading ? (

@@ -37,7 +37,7 @@ export const Post = ({ username, content, timestamp, likes: initialLikes, commen
         .select("*")
         .eq("post_id", postId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       setIsLiked(!!likeData);
     } catch (error) {

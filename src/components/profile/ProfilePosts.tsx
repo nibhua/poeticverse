@@ -26,10 +26,10 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
 
       if (error) throw error;
 
-      const likesCount = likes.reduce((acc, curr) => {
+      const likesCount = likes?.reduce((acc, curr) => {
         acc[curr.post_id] = (acc[curr.post_id] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {} as Record<string, number>) || {};
 
       const { data: comments, error: commentsError } = await supabase
         .from('comments')
@@ -38,10 +38,10 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
 
       if (commentsError) throw commentsError;
 
-      const commentsCount = comments.reduce((acc, curr) => {
+      const commentsCount = comments?.reduce((acc, curr) => {
         acc[curr.post_id] = (acc[curr.post_id] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {} as Record<string, number>) || {};
 
       return posts.map(post => ({
         ...post,

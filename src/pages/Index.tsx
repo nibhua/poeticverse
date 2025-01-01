@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 const Index = () => {
   const posts = [
     {
+      postId: "1", // Added postId
       username: "johndoe",
       content: "Just launched my new project! Super excited to share it with everyone. #coding #webdev",
       timestamp: "2h ago",
@@ -11,6 +12,7 @@ const Index = () => {
       comments: 7,
     },
     {
+      postId: "2", // Added postId
       username: "techie_sarah",
       content: "Beautiful day for some outdoor coding ☀️ #remotework",
       timestamp: "4h ago",
@@ -18,6 +20,7 @@ const Index = () => {
       comments: 3,
     },
     {
+      postId: "3", // Added postId
       username: "dev_mike",
       content: "Who else is learning React in 2024? Share your experience below! 👇 #reactjs #javascript",
       timestamp: "6h ago",
@@ -32,8 +35,8 @@ const Index = () => {
         <h1 className="text-xl font-bold text-center">Home</h1>
       </header>
       <main className="max-w-lg mx-auto">
-        {posts.map((post, index) => (
-          <Post key={index} {...post} />
+        {posts.map((post) => (
+          <Post key={post.postId} {...post} />
         ))}
       </main>
       <BottomNav />
