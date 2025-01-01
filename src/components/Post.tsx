@@ -7,9 +7,10 @@ interface PostProps {
   timestamp: string;
   likes: number;
   comments: number;
+  imageUrl?: string; // Added imageUrl as an optional prop
 }
 
-export const Post = ({ username, content, timestamp, likes: initialLikes, comments }: PostProps) => {
+export const Post = ({ username, content, timestamp, likes: initialLikes, comments, imageUrl }: PostProps) => {
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -32,6 +33,15 @@ export const Post = ({ username, content, timestamp, likes: initialLikes, commen
         </div>
       </div>
       <p className="text-gray-800 mb-4">{content}</p>
+      {imageUrl && (
+        <div className="mb-4">
+          <img 
+            src={imageUrl} 
+            alt="Post content" 
+            className="w-full h-auto rounded-lg"
+          />
+        </div>
+      )}
       <div className="flex items-center space-x-6 text-gray-500">
         <button 
           onClick={handleLike}
