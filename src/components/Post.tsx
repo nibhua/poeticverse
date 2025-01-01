@@ -32,12 +32,24 @@ export const Post = ({ username, content, timestamp, likes: initialLikes, commen
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // First verify if the post exists
+      const { data: postExists } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("id", postId)
+        .single();
+
+      if (!postExists) {
+        console.error("Post does not exist:", postId);
+        return;
+      }
+
       const { data: likeData } = await supabase
         .from("likes")
         .select("*")
         .eq("post_id", postId)
         .eq("user_id", user.id)
-        .maybeSingle(); // Changed from .single() to .maybeSingle()
+        .maybeSingle();
 
       setIsLiked(!!likeData);
     } catch (error) {
@@ -47,6 +59,18 @@ export const Post = ({ username, content, timestamp, likes: initialLikes, commen
 
   const fetchComments = async () => {
     try {
+      // First verify if the post exists
+      const { data: postExists } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("id", postId)
+        .single();
+
+      if (!postExists) {
+        console.error("Post does not exist:", postId);
+        return;
+      }
+
       const { data: comments, error } = await supabase
         .from("comments")
         .select(`
@@ -77,6 +101,18 @@ export const Post = ({ username, content, timestamp, likes: initialLikes, commen
         return;
       }
 
+      // First verify if the post exists
+      const { data: postExists } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("id", postId)
+        .single();
+
+      if (!postExists) {
+        toast.error("Cannot like this post");
+        return;
+      }
+
       if (isLiked) {
         await supabase
           .from("likes")
@@ -104,6 +140,18 @@ export const Post = ({ username, content, timestamp, likes: initialLikes, commen
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please login to comment");
+        return;
+      }
+
+      // First verify if the post exists
+      const { data: postExists } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("id", postId)
+        .single();
+
+      if (!postExists) {
+        toast.error("Cannot comment on this post");
         return;
       }
 
