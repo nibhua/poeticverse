@@ -2,19 +2,21 @@ import { Post } from "@/components/Post";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface PostType {
+  id: string;
+  content_text: string | null;
+  content_type: string;
+  created_at: string;
+  image_url: string | null;
+  caption: string | null;
+}
+
 interface ProfilePostsProps {
-  posts: Array<{
-    id: string;
-    content_text: string | null;
-    content_type: string;
-    created_at: string;
-    image_url: string | null;
-    caption: string | null;
-  }>;
+  posts: PostType[];
   username: string;
 }
 
-interface PostWithCounts extends ProfilePostsProps['posts'][0] {
+interface PostWithCounts extends PostType {
   likes: number;
   comments: number;
 }
