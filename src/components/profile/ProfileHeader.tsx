@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Edit, LogOut, Settings, Trash2, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,30 @@ export const ProfileHeader = ({
   const navigate = useNavigate();
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(followersCount);
+
+  // Check if current user is following this profile
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("followers")
+          .select("*")
+          .eq("follower_id", user.id)
+          .eq("followed_id", userId)
+          .maybeSingle();
+
+        if (error) throw error;
+        setIsFollowing(!!data);
+      } catch (error) {
+        console.error("Error checking follow status:", error);
+      }
+    };
+
+    checkFollowStatus();
+  }, [userId]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -84,17 +108,29 @@ export const ProfileHeader = ({
 
         if (error) throw error;
         setFollowerCount(prev => prev - 1);
+        setIsFollowing(false);
+        toast.success("Unfollowed successfully");
       } else {
         const { error } = await supabase
           .from("followers")
-          .insert([{ follower_id: user.id, followed_id: userId }]);
+          .insert([{ follower_id: user.id, followed_id: userId }])
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (error) {
+          // Handle the unique constraint violation
+          if (error.code === '23505') {
+            toast.error("You are already following this user");
+            setIsFollowing(true);
+            return;
+          }
+          throw error;
+        }
+        
         setFollowerCount(prev => prev + 1);
+        setIsFollowing(true);
+        toast.success("Followed successfully");
       }
-
-      setIsFollowing(!isFollowing);
-      toast.success(isFollowing ? "Unfollowed successfully" : "Followed successfully");
     } catch (error) {
       console.error("Error toggling follow:", error);
       toast.error("Failed to update follow status");
