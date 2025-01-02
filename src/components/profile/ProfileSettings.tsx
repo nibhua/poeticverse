@@ -33,10 +33,18 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
     }
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
-      
-      await supabase.auth.signOut();
+      // First delete the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Then sign out the user
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+
       toast.success("Account deleted successfully");
       navigate("/login");
     } catch (error) {
