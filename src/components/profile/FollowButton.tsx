@@ -12,6 +12,7 @@ interface FollowButtonProps {
 export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountChange }: FollowButtonProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(initialFollowersCount);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const checkFollowStatus = async () => {
@@ -38,6 +39,7 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
 
   const handleFollowToggle = async () => {
     try {
+      setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please login to follow users");
@@ -52,6 +54,7 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
           .eq("followed_id", userId);
 
         if (error) throw error;
+        
         const newCount = followerCount - 1;
         setFollowerCount(newCount);
         onFollowersCountChange(newCount);
@@ -60,11 +63,10 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
       } else {
         const { error } = await supabase
           .from("followers")
-          .insert([{ follower_id: user.id, followed_id: userId }])
-          .select()
-          .single();
+          .insert([{ follower_id: user.id, followed_id: userId }]);
 
         if (error) {
+          // Handle unique constraint violation
           if (error.code === '23505') {
             toast.error("You are already following this user");
             setIsFollowing(true);
@@ -79,9 +81,11 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
         setIsFollowing(true);
         toast.success("Followed successfully");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling follow:", error);
       toast.error("Failed to update follow status");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,8 +93,9 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
     <Button
       onClick={handleFollowToggle}
       variant={isFollowing ? "outline" : "default"}
+      disabled={isLoading}
     >
-      {isFollowing ? "Unfollow" : "Follow"}
+      {isLoading ? "Loading..." : isFollowing ? "Unfollow" : "Follow"}
     </Button>
   );
 };
