@@ -1,16 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Edit, LogOut, Settings, Trash2, UserRound } from "lucide-react";
+import { Edit, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useState } from "react";
+import { ProfileSettings } from "./ProfileSettings";
+import { FollowButton } from "./FollowButton";
 
 interface ProfileHeaderProps {
   username: string;
@@ -36,106 +30,7 @@ export const ProfileHeader = ({
   userId,
 }: ProfileHeaderProps) => {
   const navigate = useNavigate();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(followersCount);
-
-  // Check if current user is following this profile
-  useEffect(() => {
-    const checkFollowStatus = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from("followers")
-          .select("*")
-          .eq("follower_id", user.id)
-          .eq("followed_id", userId)
-          .maybeSingle();
-
-        if (error) throw error;
-        setIsFollowing(!!data);
-      } catch (error) {
-        console.error("Error checking follow status:", error);
-      }
-    };
-
-    checkFollowStatus();
-  }, [userId]);
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Error logging out");
-      return;
-    }
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
-      
-      await supabase.auth.signOut();
-      toast.success("Account deleted successfully");
-      navigate("/login");
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      toast.error("Failed to delete account");
-    }
-  };
-
-  const handleFollowToggle = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please login to follow users");
-        return;
-      }
-
-      if (isFollowing) {
-        const { error } = await supabase
-          .from("followers")
-          .delete()
-          .eq("follower_id", user.id)
-          .eq("followed_id", userId);
-
-        if (error) throw error;
-        setFollowerCount(prev => prev - 1);
-        setIsFollowing(false);
-        toast.success("Unfollowed successfully");
-      } else {
-        const { error } = await supabase
-          .from("followers")
-          .insert([{ follower_id: user.id, followed_id: userId }])
-          .select()
-          .single();
-
-        if (error) {
-          // Handle the unique constraint violation
-          if (error.code === '23505') {
-            toast.error("You are already following this user");
-            setIsFollowing(true);
-            return;
-          }
-          throw error;
-        }
-        
-        setFollowerCount(prev => prev + 1);
-        setIsFollowing(true);
-        toast.success("Followed successfully");
-      }
-    } catch (error) {
-      console.error("Error toggling follow:", error);
-      toast.error("Failed to update follow status");
-    }
-  };
+  const [currentFollowersCount, setCurrentFollowersCount] = useState(followersCount);
 
   return (
     <div className="p-4">
@@ -150,31 +45,14 @@ export const ProfileHeader = ({
             >
               <Edit className="h-5 w-5" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDeleteAccount} className="text-red-600">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>Delete Account</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ProfileSettings userId={userId} />
           </div>
         ) : (
-          <Button
-            onClick={handleFollowToggle}
-            variant={isFollowing ? "outline" : "default"}
-          >
-            {isFollowing ? "Unfollow" : "Follow"}
-          </Button>
+          <FollowButton 
+            userId={userId} 
+            initialFollowersCount={followersCount}
+            onFollowersCountChange={setCurrentFollowersCount}
+          />
         )}
       </div>
 
@@ -191,7 +69,7 @@ export const ProfileHeader = ({
             <div className="text-gray-600 text-sm">Posts</div>
           </div>
           <div className="text-center">
-            <div className="font-bold">{followerCount}</div>
+            <div className="font-bold">{currentFollowersCount}</div>
             <div className="text-gray-600 text-sm">Followers</div>
           </div>
           <div className="text-center">
