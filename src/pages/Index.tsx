@@ -3,24 +3,50 @@ import { BottomNav } from "@/components/BottomNav";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate('/login');
+          return;
+        }
+        setUserId(session.user.id);
+      } catch (error) {
+        console.error("Auth error:", error);
+        navigate('/login');
+      } finally {
+        setIsLoading(false);
       }
     };
-    getCurrentUser();
-  }, []);
+
+    checkAuth();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/login');
+      } else if (session) {
+        setUserId(session.user.id);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Fetch posts from followed users first
   const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
     queryKey: ['followed-posts', userId],
-    enabled: !!userId,
+    enabled: !!userId && !isLoading,
     queryFn: async () => {
       console.log("Fetching posts from followed users");
       const { data: followedUsers } = await supabase
@@ -54,7 +80,7 @@ const Index = () => {
   // Fetch random posts from other users
   const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
     queryKey: ['random-posts', userId],
-    enabled: !!userId,
+    enabled: !!userId && !isLoading,
     queryFn: async () => {
       console.log("Fetching random posts");
       const { data: posts, error } = await supabase
@@ -76,7 +102,7 @@ const Index = () => {
     },
   });
 
-  if (followedPostsLoading || randomPostsLoading) {
+  if (isLoading || followedPostsLoading || randomPostsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -88,7 +114,7 @@ const Index = () => {
 
   return (
     <div className="pb-20">
-      <header className="sticky top-0 bg-white border-b border-gray-200 p-4">
+      <header className="sticky top-0 bg-white border-b p-4 z-10">
         <h1 className="text-xl font-bold text-center">Home</h1>
       </header>
       <main className="max-w-lg mx-auto">
