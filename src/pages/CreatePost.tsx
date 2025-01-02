@@ -2,69 +2,66 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
+import { uploadImage } from "@/utils/imageUpload";
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [postType, setPostType] = useState<"text" | "image">("text");
 
-  useEffect(() => {
-    const checkAndCreateProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
-        // Check if profile exists
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select()
-          .eq("id", user.id)
-          .single();
-
-        // If no profile exists, create one
-        if (!profile) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert({
-              id: user.id,
-              username: user.email?.split("@")[0] || "user_" + Math.random().toString(36).slice(2, 7),
-              full_name: user.user_metadata.full_name || null
-            });
-
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-            toast.error("Error setting up your profile");
-            return;
-          }
-        }
-      } catch (error: any) {
-        console.error("Error checking profile:", error);
-        toast.error("Error checking your profile");
-      }
-    };
-
-    checkAndCreateProfile();
-  }, []);
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setPostType("text");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (postType === "text" && !content.trim()) return;
+    if (postType === "image" && !selectedImage) {
+      toast.error("Please select an image to post");
+      return;
+    }
 
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      let imageUrl = null;
+      if (selectedImage) {
+        imageUrl = await uploadImage(
+          selectedImage,
+          "user-images",
+          `posts/${user.id}`
+        );
+        if (!imageUrl) return;
+      }
+
       const { error } = await supabase
         .from("posts")
         .insert({
           user_id: user.id,
-          content_type: "text",
-          content_text: content,
+          content_type: postType,
+          content_text: postType === "text" ? content : null,
+          image_url: imageUrl,
+          caption: postType === "image" ? content : null,
         });
 
       if (error) throw error;
@@ -92,22 +89,69 @@ const CreatePost = () => {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 space-y-4">
+        <div className="flex space-x-2">
+          <Button
+            variant={postType === "text" ? "default" : "outline"}
+            onClick={() => setPostType("text")}
+          >
+            Text Post
+          </Button>
+          <Button
+            variant={postType === "image" ? "default" : "outline"}
+            onClick={() => setPostType("image")}
+          >
+            Image Post
+          </Button>
+        </div>
+
+        {postType === "image" && (
+          <div className="space-y-4">
+            {!imagePreview ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <label
+                  htmlFor="image-upload"
+                  className="flex flex-col items-center justify-center cursor-pointer"
+                >
+                  <ImageIcon className="h-12 w-12 text-gray-400" />
+                  <span className="mt-2 text-sm text-gray-500">
+                    Click to upload an image
+                  </span>
+                </label>
+              </div>
+            ) : (
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full rounded-lg"
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={removeSelectedImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         <Textarea
-          placeholder="What's on your mind?"
+          placeholder={postType === "text" ? "What's on your mind?" : "Add a caption..."}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="min-h-[200px]"
+          className={postType === "text" ? "min-h-[200px]" : "min-h-[100px]"}
         />
-        
-        <Button
-          variant="outline"
-          className="mt-4 w-full"
-          onClick={() => toast.info("Image upload coming soon!")}
-        >
-          <ImageIcon className="mr-2 h-4 w-4" />
-          Add Image
-        </Button>
       </div>
 
       <BottomNav />
