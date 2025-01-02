@@ -182,6 +182,45 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_posts: {
+        Row: {
+          id: string
+          original_post_id: string
+          share_caption: string | null
+          shared_at: string
+          shared_by_user_id: string
+        }
+        Insert: {
+          id?: string
+          original_post_id: string
+          share_caption?: string | null
+          shared_at?: string
+          shared_by_user_id: string
+        }
+        Update: {
+          id?: string
+          original_post_id?: string
+          share_caption?: string | null
+          shared_at?: string
+          shared_by_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_posts_original_post_id_fkey"
+            columns: ["original_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_posts_shared_by_user_id_fkey"
+            columns: ["shared_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
