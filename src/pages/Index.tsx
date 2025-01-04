@@ -1,13 +1,14 @@
 import { Post } from "@/components/Post";
 import { BottomNav } from "@/components/BottomNav";
 import { TemporaryPostsSection } from "@/components/temporary-posts/TemporaryPostsSection";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -127,7 +128,7 @@ const Index = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
   if (isLoading || followedPostsLoading || randomPostsLoading) {
     return (
