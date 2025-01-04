@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ProfileSettings } from "./ProfileSettings";
 import { FollowButton } from "./FollowButton";
+import { FollowList } from "./FollowList";
 
 interface ProfileHeaderProps {
   username: string;
@@ -31,6 +32,8 @@ export const ProfileHeader = ({
 }: ProfileHeaderProps) => {
   const navigate = useNavigate();
   const [currentFollowersCount, setCurrentFollowersCount] = useState(followersCount);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
 
   return (
     <div className="p-4">
@@ -68,14 +71,20 @@ export const ProfileHeader = ({
             <div className="font-bold">{postsCount}</div>
             <div className="text-gray-600 text-sm">Posts</div>
           </div>
-          <div className="text-center">
+          <button 
+            className="text-center hover:opacity-75 transition-opacity"
+            onClick={() => setShowFollowers(true)}
+          >
             <div className="font-bold">{currentFollowersCount}</div>
             <div className="text-gray-600 text-sm">Followers</div>
-          </div>
-          <div className="text-center">
+          </button>
+          <button 
+            className="text-center hover:opacity-75 transition-opacity"
+            onClick={() => setShowFollowing(true)}
+          >
             <div className="font-bold">{followingCount}</div>
             <div className="text-gray-600 text-sm">Following</div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -87,6 +96,22 @@ export const ProfileHeader = ({
           <div className="text-gray-600">{bio}</div>
         )}
       </div>
+
+      <FollowList
+        isOpen={showFollowers}
+        onClose={() => setShowFollowers(false)}
+        title="Followers"
+        userId={userId}
+        type="followers"
+      />
+
+      <FollowList
+        isOpen={showFollowing}
+        onClose={() => setShowFollowing(false)}
+        title="Following"
+        userId={userId}
+        type="following"
+      />
     </div>
   );
 };
