@@ -221,12 +221,53 @@ export type Database = {
           },
         ]
       }
+      temporary_posts: {
+        Row: {
+          content_text: string | null
+          content_type: string
+          created_at: string
+          expires_at: string
+          id: string
+          image_url: string | null
+          user_id: string
+        }
+        Insert: {
+          content_text?: string | null
+          content_type: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          image_url?: string | null
+          user_id: string
+        }
+        Update: {
+          content_text?: string | null
+          content_type?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporary_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_temporary_posts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share2, X } from "lucide-react";
+import { Heart, MessageCircle, Share2, X, Link2, Mail, Copy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Comments } from "./post/Comments";
 import { usePostActions } from "@/hooks/usePostActions";
@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,27 @@ export const Post = ({
     }
   };
 
+  const handleExternalShare = async (type: 'whatsapp' | 'gmail' | 'copy') => {
+    const postUrl = `${window.location.origin}/post/${postId}`;
+    
+    switch (type) {
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(`Check out this post: ${postUrl}`)}`, '_blank');
+        break;
+      case 'gmail':
+        window.open(`https://mail.google.com/mail/?view=cm&fs=1&body=${encodeURIComponent(`Check out this post: ${postUrl}`)}`, '_blank');
+        break;
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(postUrl);
+          toast.success("Link copied to clipboard!");
+        } catch (err) {
+          toast.error("Failed to copy link");
+        }
+        break;
+    }
+  };
+
   return (
     <div className="bg-white p-4 border-b border-gray-200">
       <div className="flex items-start mb-2">
@@ -133,27 +155,59 @@ export const Post = ({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Share Post</DialogTitle>
+              <DialogDescription>
+                Share this post internally or on other platforms
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <Textarea
-                placeholder="Add a caption to your share (optional)"
-                value={shareCaption}
-                onChange={(e) => setShareCaption(e.target.value)}
-                className="min-h-[100px]"
-              />
-              <div className="flex justify-end space-x-2">
+              <div className="flex flex-col space-y-2">
                 <Button
                   variant="outline"
-                  onClick={() => setShowShareDialog(false)}
+                  className="w-full justify-start"
+                  onClick={() => handleExternalShare('whatsapp')}
                 >
-                  Cancel
+                  <img src="/whatsapp-icon.png" alt="WhatsApp" className="w-5 h-5 mr-2" />
+                  Share on WhatsApp
                 </Button>
                 <Button
-                  onClick={handleShare}
-                  disabled={isSharing}
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleExternalShare('gmail')}
                 >
-                  {isSharing ? "Sharing..." : "Share"}
+                  <Mail className="mr-2 h-5 w-5" />
+                  Share via Email
                 </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleExternalShare('copy')}
+                >
+                  <Copy className="mr-2 h-5 w-5" />
+                  Copy Link
+                </Button>
+              </div>
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-2">Share internally with caption</p>
+                <Textarea
+                  placeholder="Add a caption to your share (optional)"
+                  value={shareCaption}
+                  onChange={(e) => setShareCaption(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                <div className="flex justify-end space-x-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowShareDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    {isSharing ? "Sharing..." : "Share Internally"}
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
