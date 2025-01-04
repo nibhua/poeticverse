@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
-import { Image as ImageIcon, X } from "lucide-react";
+import { Image as ImageIcon, X, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage } from "@/utils/imageUpload";
 
@@ -16,6 +16,7 @@ const CreatePost = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [postType, setPostType] = useState<"text" | "image">("text");
+  const [isTemporary, setIsTemporary] = useState(false);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,19 +55,28 @@ const CreatePost = () => {
         if (!imageUrl) return;
       }
 
+      const table = isTemporary ? 'temporary_posts' : 'posts';
+      const postData = {
+        user_id: user.id,
+        content_type: postType,
+        content_text: postType === "text" ? content : null,
+        image_url: imageUrl,
+        caption: postType === "image" ? content : null,
+      };
+
+      if (isTemporary) {
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+        Object.assign(postData, { expires_at: expiresAt.toISOString() });
+      }
+
       const { error } = await supabase
-        .from("posts")
-        .insert({
-          user_id: user.id,
-          content_type: postType,
-          content_text: postType === "text" ? content : null,
-          image_url: imageUrl,
-          caption: postType === "image" ? content : null,
-        });
+        .from(table)
+        .insert(postData);
 
       if (error) throw error;
 
-      toast.success("Post created successfully!");
+      toast.success(`${isTemporary ? 'Temporary post' : 'Post'} created successfully!`);
       navigate("/");
     } catch (error: any) {
       toast.error(error.message);
@@ -102,6 +112,14 @@ const CreatePost = () => {
             onClick={() => setPostType("image")}
           >
             Image Post
+          </Button>
+          <Button
+            variant={isTemporary ? "default" : "outline"}
+            onClick={() => setIsTemporary(!isTemporary)}
+            className="ml-auto"
+          >
+            <Clock className="h-4 w-4 mr-2" />
+            24h
           </Button>
         </div>
 

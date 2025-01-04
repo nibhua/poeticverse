@@ -1,5 +1,6 @@
 import { Post } from "@/components/Post";
 import { BottomNav } from "@/components/BottomNav";
+import { TemporaryPostsSection } from "@/components/temporary-posts/TemporaryPostsSection";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -118,6 +119,7 @@ const Index = () => {
         <h1 className="text-xl font-bold text-center">Home</h1>
       </header>
       <main className="max-w-lg mx-auto">
+        <TemporaryPostsSection />
         {allPosts.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             No posts yet. Follow some users to see their posts here!
