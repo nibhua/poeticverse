@@ -30,19 +30,35 @@ export const FollowList = ({ isOpen, onClose, title, userId, type }: FollowListP
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("followers")
-        .select(`
-          ${type === "followers" ? "follower:follower_id (id, username, profile_pic_url)" : "followed:followed_id (id, username, profile_pic_url)"}
-        `)
-        .eq(type === "followers" ? "followed_id" : "follower_id", userId);
+      if (type === "followers") {
+        const { data, error } = await supabase
+          .from('followers')
+          .select(`
+            follower_profile:profiles!followers_follower_id_fkey (
+              id,
+              username,
+              profile_pic_url
+            )
+          `)
+          .eq('followed_id', userId);
 
-      if (error) throw error;
+        if (error) throw error;
+        setUsers(data?.map(item => item.follower_profile) || []);
+      } else {
+        const { data, error } = await supabase
+          .from('followers')
+          .select(`
+            followed_profile:profiles!followers_followed_id_fkey (
+              id,
+              username,
+              profile_pic_url
+            )
+          `)
+          .eq('follower_id', userId);
 
-      const formattedUsers = data.map(item => 
-        type === "followers" ? item.follower : item.followed
-      );
-      setUsers(formattedUsers);
+        if (error) throw error;
+        setUsers(data?.map(item => item.followed_profile) || []);
+      }
     } catch (error) {
       console.error(`Error fetching ${type}:`, error);
       toast.error(`Failed to load ${type}`);
