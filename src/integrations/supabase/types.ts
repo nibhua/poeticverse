@@ -223,6 +223,7 @@ export type Database = {
       }
       temporary_posts: {
         Row: {
+          caption: string | null
           content_text: string | null
           content_type: string
           created_at: string
@@ -232,6 +233,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          caption?: string | null
           content_text?: string | null
           content_type: string
           created_at?: string
@@ -241,6 +243,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          caption?: string | null
           content_text?: string | null
           content_type?: string
           created_at?: string

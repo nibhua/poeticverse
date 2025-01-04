@@ -23,6 +23,7 @@ const CreatePost = () => {
     if (file) {
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
+      setPostType("image");
     }
   };
 
@@ -52,7 +53,7 @@ const CreatePost = () => {
           "user-images",
           `posts/${user.id}`
         );
-        if (!imageUrl) return;
+        if (!imageUrl) throw new Error("Failed to upload image");
       }
 
       const table = isTemporary ? 'temporary_posts' : 'posts';
@@ -70,6 +71,7 @@ const CreatePost = () => {
         Object.assign(postData, { expires_at: expiresAt.toISOString() });
       }
 
+      console.log("Creating post with data:", postData);
       const { error } = await supabase
         .from(table)
         .insert(postData);
@@ -79,6 +81,7 @@ const CreatePost = () => {
       toast.success(`${isTemporary ? 'Temporary post' : 'Post'} created successfully!`);
       navigate("/");
     } catch (error: any) {
+      console.error("Error creating post:", error);
       toast.error(error.message);
     } finally {
       setLoading(false);
