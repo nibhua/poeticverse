@@ -30,7 +30,6 @@ const Index = () => {
 
     checkAuth();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         navigate('/login');
@@ -44,7 +43,7 @@ const Index = () => {
     };
   }, [navigate]);
 
-  // Fetch posts from followed users first
+  // Fetch posts from followed users with like counts
   const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
     queryKey: ['followed-posts', userId],
     enabled: !!userId && !isLoading,
@@ -63,7 +62,8 @@ const Index = () => {
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username)
+          profiles:user_id (username),
+          likes:likes (count)
         `)
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
@@ -74,11 +74,14 @@ const Index = () => {
         throw error;
       }
 
-      return posts;
+      return posts.map(post => ({
+        ...post,
+        likes: post.likes[0]?.count || 0
+      }));
     },
   });
 
-  // Fetch random posts from other users
+  // Fetch random posts with like counts
   const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
     queryKey: ['random-posts', userId],
     enabled: !!userId && !isLoading,
@@ -88,7 +91,8 @@ const Index = () => {
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username)
+          profiles:user_id (username),
+          likes:likes (count)
         `)
         .not('user_id', 'eq', userId)
         .order('created_at', { ascending: false })
@@ -99,9 +103,31 @@ const Index = () => {
         throw error;
       }
 
-      return posts;
+      return posts.map(post => ({
+        ...post,
+        likes: post.likes[0]?.count || 0
+      }));
     },
   });
+
+  // Set up real-time subscription for likes
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:likes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'likes' },
+        () => {
+          // Invalidate queries to refetch data
+          queryClient.invalidateQueries({ queryKey: ['followed-posts'] });
+          queryClient.invalidateQueries({ queryKey: ['random-posts'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   if (isLoading || followedPostsLoading || randomPostsLoading) {
     return (
@@ -133,7 +159,7 @@ const Index = () => {
               content={post.content_text || post.caption || ""}
               timestamp={new Date(post.created_at).toLocaleDateString()}
               imageUrl={post.image_url}
-              likes={0}
+              likes={post.likes}
               comments={0}
             />
           ))

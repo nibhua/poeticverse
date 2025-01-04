@@ -1,27 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const usePostActions = (postId: string) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likes, setLikes] = useState(0);
   const [postComments, setPostComments] = useState<Array<{ id: string; comment_text: string; username: string }>>([]);
+  const queryClient = useQueryClient();
 
   const checkIfLiked = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data: postExists } = await supabase
-        .from("posts")
-        .select("id")
-        .eq("id", postId)
-        .maybeSingle();
-
-      if (!postExists) {
-        console.error("Post does not exist:", postId);
-        return;
-      }
 
       const { data: likeData } = await supabase
         .from("likes")
@@ -38,17 +29,6 @@ export const usePostActions = (postId: string) => {
 
   const fetchComments = async () => {
     try {
-      const { data: postExists } = await supabase
-        .from("posts")
-        .select("id")
-        .eq("id", postId)
-        .maybeSingle();
-
-      if (!postExists) {
-        console.error("Post does not exist:", postId);
-        return;
-      }
-
       const { data: comments, error } = await supabase
         .from("comments")
         .select(`
@@ -79,17 +59,6 @@ export const usePostActions = (postId: string) => {
         return;
       }
 
-      const { data: postExists } = await supabase
-        .from("posts")
-        .select("id")
-        .eq("id", postId)
-        .maybeSingle();
-
-      if (!postExists) {
-        toast.error("Cannot like this post");
-        return;
-      }
-
       if (isLiked) {
         await supabase
           .from("likes")
@@ -104,6 +73,11 @@ export const usePostActions = (postId: string) => {
         setLikes(prev => prev + 1);
       }
       setIsLiked(!isLiked);
+      
+      // Invalidate queries to update like counts everywhere
+      queryClient.invalidateQueries({ queryKey: ['followed-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['random-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['posts-with-likes'] });
     } catch (error) {
       console.error("Error handling like:", error);
       toast.error("Failed to update like");
@@ -117,17 +91,6 @@ export const usePostActions = (postId: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please login to comment");
-        return;
-      }
-
-      const { data: postExists } = await supabase
-        .from("posts")
-        .select("id")
-        .eq("id", postId)
-        .maybeSingle();
-
-      if (!postExists) {
-        toast.error("Cannot comment on this post");
         return;
       }
 
@@ -148,6 +111,24 @@ export const usePostActions = (postId: string) => {
       toast.error("Failed to add comment");
     }
   };
+
+  // Set up real-time subscription for likes
+  useEffect(() => {
+    const channel = supabase
+      .channel(`public:likes:${postId}`)
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'likes', filter: `post_id=eq.${postId}` },
+        () => {
+          checkIfLiked();
+          queryClient.invalidateQueries({ queryKey: ['posts-with-likes'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId]);
 
   return {
     isLiked,
