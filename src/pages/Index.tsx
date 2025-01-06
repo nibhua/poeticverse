@@ -15,15 +15,17 @@ const Index = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!session) {
-          navigate('/login');
+          navigate("/login");
           return;
         }
         setUserId(session.user.id);
       } catch (error) {
         console.error("Auth error:", error);
-        navigate('/login');
+        navigate("/login");
       } finally {
         setIsLoading(false);
       }
@@ -31,9 +33,11 @@ const Index = () => {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/login');
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        navigate("/login");
       } else if (session) {
         setUserId(session.user.id);
       }
@@ -46,28 +50,30 @@ const Index = () => {
 
   // Fetch posts from followed users with like counts
   const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
-    queryKey: ['followed-posts', userId],
+    queryKey: ["followed-posts", userId],
     enabled: !!userId && !isLoading,
     queryFn: async () => {
       console.log("Fetching posts from followed users");
       const { data: followedUsers } = await supabase
-        .from('followers')
-        .select('followed_id')
-        .eq('follower_id', userId);
+        .from("followers")
+        .select("followed_id")
+        .eq("follower_id", userId);
 
       if (!followedUsers?.length) return [];
 
-      const followedIds = followedUsers.map(f => f.followed_id);
-      
+      const followedIds = followedUsers.map((f) => f.followed_id);
+
       const { data: posts, error } = await supabase
-        .from('posts')
-        .select(`
+        .from("posts")
+        .select(
+          `
           *,
           profiles:user_id (username),
           likes:likes (count)
-        `)
-        .in('user_id', followedIds)
-        .order('created_at', { ascending: false })
+        `
+        )
+        .in("user_id", followedIds)
+        .order("created_at", { ascending: false })
         .limit(10);
 
       if (error) {
@@ -75,28 +81,30 @@ const Index = () => {
         throw error;
       }
 
-      return posts.map(post => ({
+      return posts.map((post) => ({
         ...post,
-        likes: post.likes[0]?.count || 0
+        likes: post.likes[0]?.count || 0,
       }));
     },
   });
 
   // Fetch random posts with like counts
   const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
-    queryKey: ['random-posts', userId],
+    queryKey: ["random-posts", userId],
     enabled: !!userId && !isLoading,
     queryFn: async () => {
       console.log("Fetching random posts");
       const { data: posts, error } = await supabase
-        .from('posts')
-        .select(`
+        .from("posts")
+        .select(
+          `
           *,
           profiles:user_id (username),
           likes:likes (count)
-        `)
-        .not('user_id', 'eq', userId)
-        .order('created_at', { ascending: false })
+        `
+        )
+        .not("user_id", "eq", userId)
+        .order("created_at", { ascending: false })
         .limit(5);
 
       if (error) {
@@ -104,9 +112,9 @@ const Index = () => {
         throw error;
       }
 
-      return posts.map(post => ({
+      return posts.map((post) => ({
         ...post,
-        likes: post.likes[0]?.count || 0
+        likes: post.likes[0]?.count || 0,
       }));
     },
   });
@@ -114,15 +122,12 @@ const Index = () => {
   // Set up real-time subscription for likes
   useEffect(() => {
     const channel = supabase
-      .channel('public:likes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'likes' },
-        () => {
-          // Invalidate queries to refetch data
-          queryClient.invalidateQueries({ queryKey: ['followed-posts'] });
-          queryClient.invalidateQueries({ queryKey: ['random-posts'] });
-        }
-      )
+      .channel("public:likes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "likes" }, () => {
+        // Invalidate queries to refetch data
+        queryClient.invalidateQueries({ queryKey: ["followed-posts"] });
+        queryClient.invalidateQueries({ queryKey: ["random-posts"] });
+      })
       .subscribe();
 
     return () => {
@@ -142,9 +147,7 @@ const Index = () => {
 
   return (
     <div className="pb-20">
-      <header className="sticky top-0 bg-white border-b p-4 z-10">
-        <h1 className="text-xl font-bold text-center">Home</h1>
-      </header>
+      {/* Removed the header block here */}
       <main className="max-w-lg mx-auto">
         <TemporaryPostsSection />
         {allPosts.length === 0 ? (
