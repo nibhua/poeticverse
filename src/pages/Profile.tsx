@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/BottomNav";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ const Profile = () => {
 
   // Fetch profile data
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', username],
+    queryKey: ["profile", username],
     queryFn: async () => {
       console.log("Fetching profile for username:", username);
       const { data, error } = await supabase
@@ -39,7 +39,7 @@ const Profile = () => {
 
   // Fetch posts
   const { data: posts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ['posts', profile?.id],
+    queryKey: ["posts", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
       console.log("Fetching posts for user:", profile?.id);
@@ -61,7 +61,7 @@ const Profile = () => {
 
   // Fetch followers count
   const { data: followersCount = 0 } = useQuery({
-    queryKey: ['followers', profile?.id],
+    queryKey: ["followers", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
       const { count, error } = await supabase
@@ -76,7 +76,7 @@ const Profile = () => {
 
   // Fetch following count
   const { data: followingCount = 0 } = useQuery({
-    queryKey: ['following', profile?.id],
+    queryKey: ["following", profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
       const { count, error } = await supabase
@@ -92,7 +92,9 @@ const Profile = () => {
   // Check if current user
   useEffect(() => {
     const checkCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user && profile) {
         setIsCurrentUser(user.id === profile.id);
       }
@@ -102,7 +104,7 @@ const Profile = () => {
 
   if (profileLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
@@ -110,35 +112,46 @@ const Profile = () => {
 
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-xl font-bold mb-4">Profile not found</h1>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
+        <div className="bg-white rounded shadow p-6 w-full max-w-md text-center">
+          <h1 className="text-xl font-bold mb-4">Profile not found</h1>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="pb-20">
-      <div className="bg-white">
-        <ProfileHeader
-          username={profile.username}
-          fullName={profile.full_name}
-          bio={profile.bio}
-          profilePicUrl={profile.profile_pic_url}
-          followersCount={followersCount}
-          followingCount={followingCount}
-          postsCount={posts.length}
-          isCurrentUser={isCurrentUser}
-          userId={profile.id} // Added userId prop
-        />
-        
-        {postsLoading ? (
-          <div className="p-4 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          </div>
-        ) : (
-          <ProfilePosts posts={posts} username={profile.username} />
-        )}
+    <div className="min-h-screen bg-gray-100 pb-20">
+      {/* Container for the profile content */}
+      <div className="max-w-2xl mx-auto pt-6 px-4">
+        {/* Profile card (shifted more to the right) */}
+        <div className="bg-white rounded shadow p-4 mb-4 ml-8">
+          <ProfileHeader
+            username={profile.username}
+            fullName={profile.full_name}
+            bio={profile.bio}
+            profilePicUrl={profile.profile_pic_url}
+            followersCount={followersCount}
+            followingCount={followingCount}
+            postsCount={posts.length}
+            isCurrentUser={isCurrentUser}
+            userId={profile.id} // keep userId prop
+          />
+        </div>
+
+        {/* Posts card (also shifted more to the right) */}
+        <div className="bg-white rounded shadow p-4 ml-8">
+          {postsLoading ? (
+            <div className="p-4 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            </div>
+          ) : (
+            <ProfilePosts posts={posts} username={profile.username} />
+          )}
+        </div>
       </div>
+
+      {/* Bottom navigation */}
       <BottomNav />
     </div>
   );
