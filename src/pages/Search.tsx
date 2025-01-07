@@ -43,10 +43,9 @@ const Search = () => {
   }, [searchTerm]);
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20">
-      {/* Sticky top search bar */}
+    <div className="pb-20">
       <div className="sticky top-0 bg-white border-b border-gray-200 p-4">
-        <div className="relative max-w-md mx-auto">
+        <div className="relative">
           <SearchIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
           <Input
             className="pl-10"
@@ -57,37 +56,23 @@ const Search = () => {
         </div>
       </div>
 
-      {/* Results container */}
-      <div className="max-w-md mx-auto mt-4 px-4">
-        {/* Wrap results in a card-like container */}
-        <div className="bg-white rounded shadow-sm divide-y divide-gray-200">
-          {results.map((profile) => (
-            <Link
-              key={profile.username}
-              to={`/profile/${profile.username}`}
-              className="flex items-center p-4 hover:bg-gray-50"
-            >
-              <Avatar className="h-12 w-12 mr-4">
-                <AvatarImage src={profile.profile_pic_url} />
-                <AvatarFallback>
-                  {profile.username[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold leading-tight">
-                  {profile.username}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {profile.full_name}
-                </div>
-              </div>
-            </Link>
-          ))}
-          {/* Show a message if no results and searchTerm is at least 2 chars */}
-          {results.length === 0 && searchTerm.length >= 2 && (
-            <div className="p-4 text-gray-500 text-center">No users found</div>
-          )}
-        </div>
+      <div className="divide-y divide-gray-200">
+        {results.map((profile) => (
+          <Link
+            key={profile.username}
+            to={`/profile/${profile.username}`}
+            className="flex items-center p-4 hover:bg-gray-50"
+          >
+            <Avatar className="h-12 w-12 mr-4">
+              <AvatarImage src={profile.profile_pic_url} />
+              <AvatarFallback>{profile.username[0].toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-semibold">{profile.username}</div>
+              <div className="text-sm text-gray-500">{profile.full_name}</div>
+            </div>
+          </Link>
+        ))}
       </div>
 
       <BottomNav />
