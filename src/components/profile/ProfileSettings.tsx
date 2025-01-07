@@ -47,14 +47,21 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         return;
       }
 
-      // Delete the user's auth account
-      const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
+      // Delete the user's profile (this will trigger our cascade delete function)
+      const { error: deleteError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
       if (deleteError) {
-        console.error("Error deleting user:", deleteError);
+        console.error("Error deleting profile:", deleteError);
         toast.error("Failed to delete account");
         return;
       }
 
+      // Sign out after successful deletion
+      await supabase.auth.signOut();
+      
       toast.success("Account deleted successfully");
       navigate("/login");
     } catch (error) {
