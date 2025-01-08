@@ -65,8 +65,8 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         console.error("Error signing out:", signOutError);
       }
 
-      // Finally, delete the auth user
-      const { error: authDeleteError } = await supabase.rpc('delete_auth_user');
+      // Finally, delete the auth user using the RPC function
+      const { error: authDeleteError } = await supabase.rpc('delete_auth_user' as 'delete_auth_user');
       if (authDeleteError) {
         console.error("Error deleting auth user:", authDeleteError);
         toast.error("Failed to completely delete account");
