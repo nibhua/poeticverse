@@ -4,11 +4,11 @@ interface PostImageProps {
 
 export const PostImage = ({ imageUrl }: PostImageProps) => {
   return (
-    <div className="relative w-full aspect-square mb-4">
+    <div className="relative w-full h-[450px]">
       <img 
         src={imageUrl} 
         alt="Post content" 
-        className="absolute inset-0 w-full h-full object-cover rounded-lg"
+        className="w-full h-full object-cover"
       />
     </div>
   );

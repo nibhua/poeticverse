@@ -36,65 +36,67 @@ export const ProfileHeader = ({
   const [showFollowing, setShowFollowing] = useState(false);
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">{username}</h1>
-        {isCurrentUser ? (
-          <div className="flex space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate(`/profile/${username}/edit`)}
-            >
-              <Edit className="h-5 w-5" />
-            </Button>
-            <ProfileSettings userId={userId} />
-          </div>
-        ) : (
-          <FollowButton 
-            userId={userId} 
-            initialFollowersCount={followersCount}
-            onFollowersCountChange={setCurrentFollowersCount}
-          />
-        )}
-      </div>
-
-      <div className="flex items-center space-x-4 mb-4">
-        <Avatar className="h-20 w-20">
+    <div className="p-4 max-w-[935px] mx-auto">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
+        <Avatar className="w-[150px] h-[150px]">
           <AvatarImage src={profilePicUrl || undefined} />
           <AvatarFallback>
-            <UserRound className="h-12 w-12" />
+            <UserRound className="w-16 h-16" />
           </AvatarFallback>
         </Avatar>
-        <div className="flex space-x-4">
-          <div className="text-center">
-            <div className="font-bold">{postsCount}</div>
-            <div className="text-gray-600 text-sm">Posts</div>
-          </div>
-          <button 
-            className="text-center hover:opacity-75 transition-opacity"
-            onClick={() => setShowFollowers(true)}
-          >
-            <div className="font-bold">{currentFollowersCount}</div>
-            <div className="text-gray-600 text-sm">Followers</div>
-          </button>
-          <button 
-            className="text-center hover:opacity-75 transition-opacity"
-            onClick={() => setShowFollowing(true)}
-          >
-            <div className="font-bold">{followingCount}</div>
-            <div className="text-gray-600 text-sm">Following</div>
-          </button>
-        </div>
-      </div>
 
-      <div className="mb-4">
-        {fullName && (
-          <div className="font-bold">{fullName}</div>
-        )}
-        {bio && (
-          <div className="text-gray-600">{bio}</div>
-        )}
+        <div className="flex-1">
+          <div className="flex items-center gap-4 mb-4">
+            <h1 className="text-xl font-semibold">{username}</h1>
+            {isCurrentUser ? (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate(`/profile/${username}/edit`)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+                <ProfileSettings userId={userId} />
+              </div>
+            ) : (
+              <FollowButton 
+                userId={userId} 
+                initialFollowersCount={followersCount}
+                onFollowersCountChange={setCurrentFollowersCount}
+              />
+            )}
+          </div>
+
+          <div className="flex gap-8 mb-4 text-sm">
+            <div>
+              <span className="font-semibold">{postsCount}</span>
+              <span className="text-gray-500 ml-1">posts</span>
+            </div>
+            <button 
+              className="hover:opacity-75 transition-opacity"
+              onClick={() => setShowFollowers(true)}
+            >
+              <span className="font-semibold">{currentFollowersCount}</span>
+              <span className="text-gray-500 ml-1">followers</span>
+            </button>
+            <button 
+              className="hover:opacity-75 transition-opacity"
+              onClick={() => setShowFollowing(true)}
+            >
+              <span className="font-semibold">{followingCount}</span>
+              <span className="text-gray-500 ml-1">following</span>
+            </button>
+          </div>
+
+          {(fullName || bio) && (
+            <div className="text-sm">
+              {fullName && <div className="font-semibold mb-1">{fullName}</div>}
+              {bio && <div className="whitespace-pre-wrap">{bio}</div>}
+            </div>
+          )}
+        </div>
       </div>
 
       <FollowList

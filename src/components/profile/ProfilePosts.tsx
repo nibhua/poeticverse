@@ -75,19 +75,20 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
   }
 
   return (
-    <div className="border-t border-gray-200">
-      {(postsWithLikes || posts).map((post: PostType | PostWithCounts) => (
-        <Post
-          key={post.id}
-          postId={post.id}
-          username={username}
-          content={post.content_text || post.caption || ""}
-          timestamp={new Date(post.created_at).toLocaleDateString()}
-          imageUrl={post.image_url}
-          likes={'likes' in post ? (post as PostWithCounts).likes : 0}
-          comments={'comments' in post ? (post as PostWithCounts).comments : 0}
-        />
-      ))}
+    <div className="max-w-[935px] mx-auto">
+      <div className="grid grid-cols-3 gap-1 md:gap-4">
+        {(postsWithLikes || posts).map((post: PostType | PostWithCounts) => (
+          <div key={post.id} className="aspect-square relative">
+            {post.image_url && (
+              <img
+                src={post.image_url}
+                alt={post.caption || "Post"}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
