@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { deleteUserData } from "@/utils/accountDeletion";
+import { deleteUserData } from "@/utils/account/deleteUserData";
 
 interface ProfileSettingsProps {
   userId: string;
