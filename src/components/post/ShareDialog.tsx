@@ -6,7 +6,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Mail, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ShareDialogProps {
@@ -36,6 +36,18 @@ export const ShareDialog = ({ isOpen, onClose, postId }: ShareDialogProps) => {
     }
   };
 
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
+    window.open(whatsappUrl, '_blank');
+    onClose();
+  };
+
+  const handleEmailShare = () => {
+    const emailUrl = `mailto:?subject=Check out this post&body=${encodeURIComponent(shareUrl)}`;
+    window.location.href = emailUrl;
+    onClose();
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent>
@@ -52,6 +64,22 @@ export const ShareDialog = ({ isOpen, onClose, postId }: ShareDialogProps) => {
           >
             <Copy className="h-4 w-4" />
             Copy Link
+          </Button>
+          <Button
+            onClick={handleWhatsAppShare}
+            className="w-full flex items-center gap-2"
+            variant="secondary"
+          >
+            <Share2 className="h-4 w-4" />
+            Share on WhatsApp
+          </Button>
+          <Button
+            onClick={handleEmailShare}
+            className="w-full flex items-center gap-2"
+            variant="secondary"
+          >
+            <Mail className="h-4 w-4" />
+            Share via Email
           </Button>
         </div>
       </SheetContent>
