@@ -1,127 +1,131 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 export const deleteUserData = async (userId: string) => {
   console.log("Starting account deletion process");
 
-  // First delete all likes on user's posts
-  console.log("Deleting likes on user's posts");
-  const { data: userPosts } = await supabase
-    .from('posts')
-    .select('id')
-    .eq('user_id', userId);
+  try {
+    // First delete all likes on user's posts
+    console.log("Deleting likes on user's posts");
+    const { data: userPosts } = await supabase
+      .from('posts')
+      .select('id')
+      .eq('user_id', userId);
 
-  if (userPosts) {
-    const postIds = userPosts.map(post => post.id);
-    if (postIds.length > 0) {
-      const { error: postLikesDeleteError } = await supabase
-        .from('likes')
-        .delete()
-        .in('post_id', postIds);
+    if (userPosts) {
+      const postIds = userPosts.map(post => post.id);
+      if (postIds.length > 0) {
+        const { error: likesOnPostsError } = await supabase
+          .from('likes')
+          .delete()
+          .in('post_id', postIds);
 
-      if (postLikesDeleteError) {
-        console.error("Error deleting post likes:", postLikesDeleteError);
-        throw new Error("Failed to delete post likes");
+        if (likesOnPostsError) {
+          console.error("Error deleting likes on posts:", likesOnPostsError);
+          throw new Error("Failed to delete likes on posts");
+        }
       }
     }
-  }
 
-  // Delete user's own likes
-  console.log("Deleting user likes");
-  const { error: likesDeleteError } = await supabase
-    .from('likes')
-    .delete()
-    .eq('user_id', userId);
+    // Delete user's own likes
+    console.log("Deleting user likes");
+    const { error: userLikesError } = await supabase
+      .from('likes')
+      .delete()
+      .eq('user_id', userId);
 
-  if (likesDeleteError) {
-    console.error("Error deleting likes:", likesDeleteError);
-    throw new Error("Failed to delete likes");
-  }
+    if (userLikesError) {
+      console.error("Error deleting user likes:", userLikesError);
+      throw new Error("Failed to delete user likes");
+    }
 
-  // Delete comments on user's posts and user's comments
-  console.log("Deleting comments");
-  if (userPosts) {
-    const postIds = userPosts.map(post => post.id);
-    if (postIds.length > 0) {
-      const { error: postCommentsDeleteError } = await supabase
-        .from('comments')
-        .delete()
-        .in('post_id', postIds);
+    // Delete comments on user's posts and user's comments
+    console.log("Deleting comments");
+    if (userPosts) {
+      const postIds = userPosts.map(post => post.id);
+      if (postIds.length > 0) {
+        const { error: commentsOnPostsError } = await supabase
+          .from('comments')
+          .delete()
+          .in('post_id', postIds);
 
-      if (postCommentsDeleteError) {
-        console.error("Error deleting post comments:", postCommentsDeleteError);
-        throw new Error("Failed to delete post comments");
+        if (commentsOnPostsError) {
+          console.error("Error deleting comments on posts:", commentsOnPostsError);
+          throw new Error("Failed to delete comments on posts");
+        }
       }
     }
-  }
 
-  const { error: commentsDeleteError } = await supabase
-    .from('comments')
-    .delete()
-    .eq('user_id', userId);
+    const { error: userCommentsError } = await supabase
+      .from('comments')
+      .delete()
+      .eq('user_id', userId);
 
-  if (commentsDeleteError) {
-    console.error("Error deleting comments:", commentsDeleteError);
-    throw new Error("Failed to delete comments");
-  }
+    if (userCommentsError) {
+      console.error("Error deleting user comments:", userCommentsError);
+      throw new Error("Failed to delete user comments");
+    }
 
-  // Delete shared posts
-  console.log("Deleting shared posts");
-  const { error: sharedPostsDeleteError } = await supabase
-    .from('shared_posts')
-    .delete()
-    .eq('shared_by_user_id', userId);
+    // Delete shared posts
+    console.log("Deleting shared posts");
+    const { error: sharedPostsError } = await supabase
+      .from('shared_posts')
+      .delete()
+      .eq('shared_by_user_id', userId);
 
-  if (sharedPostsDeleteError) {
-    console.error("Error deleting shared posts:", sharedPostsDeleteError);
-    throw new Error("Failed to delete shared posts");
-  }
+    if (sharedPostsError) {
+      console.error("Error deleting shared posts:", sharedPostsError);
+      throw new Error("Failed to delete shared posts");
+    }
 
-  // Delete temporary posts
-  console.log("Deleting temporary posts");
-  const { error: tempPostsDeleteError } = await supabase
-    .from('temporary_posts')
-    .delete()
-    .eq('user_id', userId);
+    // Delete temporary posts
+    console.log("Deleting temporary posts");
+    const { error: tempPostsError } = await supabase
+      .from('temporary_posts')
+      .delete()
+      .eq('user_id', userId);
 
-  if (tempPostsDeleteError) {
-    console.error("Error deleting temporary posts:", tempPostsDeleteError);
-    throw new Error("Failed to delete temporary posts");
-  }
+    if (tempPostsError) {
+      console.error("Error deleting temporary posts:", tempPostsError);
+      throw new Error("Failed to delete temporary posts");
+    }
 
-  // Delete posts
-  console.log("Deleting user posts");
-  const { error: postsDeleteError } = await supabase
-    .from('posts')
-    .delete()
-    .eq('user_id', userId);
+    // Now it's safe to delete posts since all references have been removed
+    console.log("Deleting user posts");
+    const { error: postsError } = await supabase
+      .from('posts')
+      .delete()
+      .eq('user_id', userId);
 
-  if (postsDeleteError) {
-    console.error("Error deleting posts:", postsDeleteError);
-    throw new Error("Failed to delete posts");
-  }
+    if (postsError) {
+      console.error("Error deleting posts:", postsError);
+      throw new Error("Failed to delete posts");
+    }
 
-  // Delete followers/following relationships
-  console.log("Deleting follower relationships");
-  const { error: followersDeleteError } = await supabase
-    .from('followers')
-    .delete()
-    .or(`follower_id.eq.${userId},followed_id.eq.${userId}`);
+    // Delete followers/following relationships
+    console.log("Deleting follower relationships");
+    const { error: followersError } = await supabase
+      .from('followers')
+      .delete()
+      .or(`follower_id.eq.${userId},followed_id.eq.${userId}`);
 
-  if (followersDeleteError) {
-    console.error("Error deleting followers:", followersDeleteError);
-    throw new Error("Failed to delete followers");
-  }
+    if (followersError) {
+      console.error("Error deleting followers:", followersError);
+      throw new Error("Failed to delete followers");
+    }
 
-  // Delete profile
-  console.log("Deleting user profile");
-  const { error: profileDeleteError } = await supabase
-    .from('profiles')
-    .delete()
-    .eq('id', userId);
+    // Finally, delete profile
+    console.log("Deleting user profile");
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
 
-  if (profileDeleteError) {
-    console.error("Error deleting profile:", profileDeleteError);
-    throw new Error("Failed to delete profile");
+    if (profileError) {
+      console.error("Error deleting profile:", profileError);
+      throw new Error("Failed to delete profile");
+    }
+  } catch (error) {
+    console.error("Error in deleteUserData:", error);
+    throw error;
   }
 };
