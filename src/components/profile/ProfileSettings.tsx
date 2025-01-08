@@ -32,6 +32,7 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
+      console.error("Error logging out:", error);
       toast.error("Error logging out");
       return;
     }
@@ -41,13 +42,17 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
 
   const handleDeleteAccount = async () => {
     try {
+      console.log("Starting account deletion process");
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
+        console.error("No user found");
         toast.error("No user found");
         return;
       }
 
       // First, delete the user's profile which will trigger cascade deletion
+      console.log("Deleting user profile");
       const { error: profileDeleteError } = await supabase
         .from('profiles')
         .delete()
@@ -60,19 +65,22 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
       }
 
       // Then, sign out the user
+      console.log("Signing out user");
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) {
         console.error("Error signing out:", signOutError);
       }
 
       // Finally, delete the auth user using the RPC function
-      const { error: authDeleteError } = await supabase.rpc('delete_auth_user' as 'delete_auth_user');
+      console.log("Deleting auth user");
+      const { error: authDeleteError } = await supabase.rpc('delete_auth_user');
       if (authDeleteError) {
         console.error("Error deleting auth user:", authDeleteError);
         toast.error("Failed to completely delete account");
         return;
       }
 
+      console.log("Account deletion successful");
       toast.success("Account deleted successfully");
       navigate("/login");
     } catch (error) {
