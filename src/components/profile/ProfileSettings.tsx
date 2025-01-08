@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { deleteUserData } from "@/utils/accountDeletion";
 
 interface ProfileSettingsProps {
   userId: string;
@@ -42,105 +43,14 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
 
   const handleDeleteAccount = async () => {
     try {
-      console.log("Starting account deletion process");
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         console.error("No user found");
         toast.error("No user found");
         return;
       }
 
-      // Delete likes first
-      console.log("Deleting user likes");
-      const { error: likesDeleteError } = await supabase
-        .from('likes')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (likesDeleteError) {
-        console.error("Error deleting likes:", likesDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
-
-      // Delete comments
-      console.log("Deleting user comments");
-      const { error: commentsDeleteError } = await supabase
-        .from('comments')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (commentsDeleteError) {
-        console.error("Error deleting comments:", commentsDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
-
-      // Delete shared posts
-      console.log("Deleting shared posts");
-      const { error: sharedPostsDeleteError } = await supabase
-        .from('shared_posts')
-        .delete()
-        .eq('shared_by_user_id', user.id);
-
-      if (sharedPostsDeleteError) {
-        console.error("Error deleting shared posts:", sharedPostsDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
-
-      // Delete temporary posts
-      console.log("Deleting temporary posts");
-      const { error: tempPostsDeleteError } = await supabase
-        .from('temporary_posts')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (tempPostsDeleteError) {
-        console.error("Error deleting temporary posts:", tempPostsDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
-
-      // Delete posts
-      console.log("Deleting user posts");
-      const { error: postsDeleteError } = await supabase
-        .from('posts')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (postsDeleteError) {
-        console.error("Error deleting posts:", postsDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
-
-      // Delete followers/following relationships
-      console.log("Deleting follower relationships");
-      const { error: followersDeleteError } = await supabase
-        .from('followers')
-        .delete()
-        .or(`follower_id.eq.${user.id},followed_id.eq.${user.id}`);
-
-      if (followersDeleteError) {
-        console.error("Error deleting followers:", followersDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
-
-      // Now delete the profile
-      console.log("Deleting user profile");
-      const { error: profileDeleteError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileDeleteError) {
-        console.error("Error deleting profile:", profileDeleteError);
-        toast.error("Failed to delete account");
-        return;
-      }
+      await deleteUserData(user.id);
 
       // Sign out the user
       console.log("Signing out user");
@@ -149,7 +59,7 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         console.error("Error signing out:", signOutError);
       }
 
-      // Finally, delete the auth user
+      // Delete the auth user
       console.log("Deleting auth user");
       const { error: authDeleteError } = await supabase.rpc('delete_auth_user');
       if (authDeleteError) {
