@@ -4,7 +4,7 @@ interface PostImageProps {
 
 export const PostImage = ({ imageUrl }: PostImageProps) => {
   return (
-    <div className="relative w-full h-[450px]">
+    <div className="relative aspect-square w-full">
       <img 
         src={imageUrl} 
         alt="Post content" 
