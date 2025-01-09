@@ -1,6 +1,7 @@
 import { Post } from "@/components/Post";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 
 interface PostType {
   id: string;
@@ -14,6 +15,7 @@ interface PostType {
 interface ProfilePostsProps {
   posts: PostType[];
   username: string;
+  profilePicUrl?: string;
 }
 
 interface PostWithCounts extends PostType {
@@ -29,7 +31,7 @@ interface CommentRecord {
   post_id: string;
 }
 
-export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
+export const ProfilePosts = ({ posts, username, profilePicUrl }: ProfilePostsProps) => {
   const { data: postsWithLikes } = useQuery({
     queryKey: ['posts-with-likes', posts.map(p => p.id)],
     queryFn: async () => {
@@ -75,18 +77,20 @@ export const ProfilePosts = ({ posts, username }: ProfilePostsProps) => {
   }
 
   return (
-    <div className="max-w-[935px] mx-auto">
-      <div className="grid grid-cols-3 gap-1 md:gap-4">
+    <div className="max-w-[935px] mx-auto mt-8">
+      <div className="space-y-6">
         {(postsWithLikes || posts).map((post: PostType | PostWithCounts) => (
-          <div key={post.id} className="aspect-square relative">
-            {post.image_url && (
-              <img
-                src={post.image_url}
-                alt={post.caption || "Post"}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-          </div>
+          <Post
+            key={post.id}
+            postId={post.id}
+            username={username}
+            content={post.content_text || post.caption || ""}
+            timestamp={new Date(post.created_at).toLocaleDateString()}
+            imageUrl={post.image_url || undefined}
+            likes={'likes' in post ? post.likes : 0}
+            comments={'comments' in post ? post.comments : 0}
+            profilePicUrl={profilePicUrl}
+          />
         ))}
       </div>
     </div>

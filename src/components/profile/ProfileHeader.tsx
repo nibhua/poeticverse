@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ProfileSettings } from "./ProfileSettings";
 import { FollowButton } from "./FollowButton";
 import { FollowList } from "./FollowList";
+import { motion } from "framer-motion";
 
 interface ProfileHeaderProps {
   username: string;
@@ -36,17 +37,22 @@ export const ProfileHeader = ({
   const [showFollowing, setShowFollowing] = useState(false);
 
   return (
-    <div className="p-4 max-w-[935px] mx-auto">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="p-4 max-w-[935px] mx-auto bg-white rounded-lg shadow-sm"
+    >
       <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
-        <Avatar className="w-[150px] h-[150px]">
+        <Avatar className="w-24 h-24 md:w-32 md:h-32 ring-2 ring-offset-2 ring-gray-200">
           <AvatarImage src={profilePicUrl || undefined} />
           <AvatarFallback>
-            <UserRound className="w-16 h-16" />
+            <UserRound className="w-8 h-8" />
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 flex-wrap">
             <h1 className="text-xl font-semibold">{username}</h1>
             {isCurrentUser ? (
               <div className="flex gap-2">
@@ -54,6 +60,7 @@ export const ProfileHeader = ({
                   variant="outline" 
                   size="sm"
                   onClick={() => navigate(`/profile/${username}/edit`)}
+                  className="hover:bg-gray-100"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Profile
@@ -93,7 +100,7 @@ export const ProfileHeader = ({
           {(fullName || bio) && (
             <div className="text-sm">
               {fullName && <div className="font-semibold mb-1">{fullName}</div>}
-              {bio && <div className="whitespace-pre-wrap">{bio}</div>}
+              {bio && <div className="whitespace-pre-wrap text-gray-600">{bio}</div>}
             </div>
           )}
         </div>
@@ -114,6 +121,6 @@ export const ProfileHeader = ({
         userId={userId}
         type="following"
       />
-    </div>
+    </motion.div>
   );
 };

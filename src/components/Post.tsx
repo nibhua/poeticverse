@@ -15,6 +15,7 @@ interface PostProps {
   comments: number;
   imageUrl?: string;
   postId: string;
+  profilePicUrl?: string;
 }
 
 export const Post = ({ 
@@ -22,8 +23,9 @@ export const Post = ({
   content, 
   timestamp, 
   likes: initialLikes, 
-  imageUrl, 
-  postId 
+  imageUrl,
+  postId,
+  profilePicUrl
 }: PostProps) => {
   const [showComments, setShowComments] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -51,7 +53,11 @@ export const Post = ({
       transition={{ duration: 0.3 }}
       className="bg-white border border-gray-200 rounded-lg mb-4 max-w-[468px] mx-auto shadow-sm hover:shadow-md transition-shadow duration-200"
     >
-      <PostHeader username={username} timestamp={timestamp} />
+      <PostHeader 
+        username={username} 
+        timestamp={timestamp}
+        profilePicUrl={profilePicUrl}
+      />
       
       <div className="px-4 py-2">
         <p className="text-sm text-gray-800 mb-2">{content}</p>
