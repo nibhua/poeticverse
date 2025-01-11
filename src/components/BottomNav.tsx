@@ -1,58 +1,72 @@
-import { Home, Search, PlusSquare, User } from "lucide-react";
+import { Home, Search, PlusSquare, UserRound, BookOpen } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 export const BottomNav = () => {
   const location = useLocation();
-  const [username, setUsername] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const getProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", user.id)
-          .single();
-        
-        if (data) {
-          setUsername(data.username);
-        }
-      }
-    };
-    
-    getProfile();
-  }, []);
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6">
-      <div className="flex justify-between items-center max-w-lg mx-auto">
-        <Link to="/" className={`flex flex-col items-center ${isActive('/') ? 'text-social-primary' : 'text-gray-500'}`}>
-          <Home size={24} />
-          <span className="text-xs mt-1">Home</span>
-        </Link>
-        <Link to="/search" className={`flex flex-col items-center ${isActive('/search') ? 'text-social-primary' : 'text-gray-500'}`}>
-          <Search size={24} />
-          <span className="text-xs mt-1">Search</span>
-        </Link>
-        <Link to="/create" className={`flex flex-col items-center ${isActive('/create') ? 'text-social-primary' : 'text-gray-500'}`}>
-          <PlusSquare size={24} />
-          <span className="text-xs mt-1">Post</span>
-        </Link>
-        <Link 
-          to={username ? `/profile/${username}` : "#"} 
-          className={`flex flex-col items-center ${isActive(`/profile/${username}`) ? 'text-social-primary' : 'text-gray-500'}`}
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 z-50">
+      <div className="max-w-lg mx-auto flex justify-between items-center">
+        <Link
+          to="/"
+          className={cn(
+            "flex flex-col items-center text-xs",
+            isActive("/") ? "text-blue-500" : "text-gray-500"
+          )}
         >
-          <User size={24} />
-          <span className="text-xs mt-1">Profile</span>
+          <Home className="h-6 w-6 mb-1" />
+          <span>Home</span>
+        </Link>
+
+        <Link
+          to="/search"
+          className={cn(
+            "flex flex-col items-center text-xs",
+            isActive("/search") ? "text-blue-500" : "text-gray-500"
+          )}
+        >
+          <Search className="h-6 w-6 mb-1" />
+          <span>Search</span>
+        </Link>
+
+        <Link
+          to="/create"
+          className={cn(
+            "flex flex-col items-center text-xs",
+            isActive("/create") ? "text-blue-500" : "text-gray-500"
+          )}
+        >
+          <PlusSquare className="h-6 w-6 mb-1" />
+          <span>Create</span>
+        </Link>
+
+        <Link
+          to="/books"
+          className={cn(
+            "flex flex-col items-center text-xs",
+            isActive("/books") ? "text-blue-500" : "text-gray-500"
+          )}
+        >
+          <BookOpen className="h-6 w-6 mb-1" />
+          <span>Books</span>
+        </Link>
+
+        <Link
+          to={`/profile/${localStorage.getItem("username") || ""}`}
+          className={cn(
+            "flex flex-col items-center text-xs",
+            location.pathname.startsWith("/profile") ? "text-blue-500" : "text-gray-500"
+          )}
+        >
+          <UserRound className="h-6 w-6 mb-1" />
+          <span>Profile</span>
         </Link>
       </div>
-    </div>
+    </nav>
   );
 };

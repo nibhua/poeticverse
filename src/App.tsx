@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Search from "./pages/Search";
 import CreatePost from "./pages/CreatePost";
+import Books from "./pages/Books";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,10 @@ const App = () => {
               <Route
                 path="/create"
                 element={session ? <CreatePost /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/books"
+                element={session ? <Books /> : <Navigate to="/login" />}
               />
             </Routes>
           </BrowserRouter>
