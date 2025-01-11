@@ -1,32 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Settings } from "lucide-react";
+import { PlusCircle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const Books = () => {
+const AdminBooks = () => {
   const navigate = useNavigate();
   
   const { data: books, isLoading } = useQuery({
-    queryKey: ['poetry-books'],
+    queryKey: ['admin-books'],
     queryFn: async () => {
-      console.log("Fetching poetry books");
+      console.log("Fetching admin books");
       const { data, error } = await supabase
         .from('poetry_books')
         .select(`
           *,
           profiles:user_id (username, profile_pic_url)
         `)
-        .eq('is_public', true)
+        .eq('is_admin_content', true)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching books:", error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
   });
@@ -40,35 +35,31 @@ const Books = () => {
   }
 
   return (
-    <div className="pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <header className="sticky top-0 bg-white border-b p-4 z-10">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">Poetry Books</h1>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate('/books/admin')}
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate('/books/create')}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Add Book
-            </Button>
-          </div>
+        <div className="max-w-2xl mx-auto flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-semibold flex-1">Admin Books</h1>
+          <Button
+            onClick={() => navigate('/books/create')}
+            className="flex items-center gap-2"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add Book
+          </Button>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto p-4">
         {books?.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
-            No poetry books available yet
+            No admin books available yet
           </div>
         ) : (
           <div className="grid gap-4">
@@ -77,7 +68,7 @@ const Books = () => {
                 key={book.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm border p-4 cursor-pointer"
+                className="bg-white rounded-lg shadow-sm border p-4"
                 onClick={() => navigate(`/books/${book.id}`)}
               >
                 <div className="flex items-start gap-4">
@@ -108,21 +99,9 @@ const Books = () => {
                       <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
                         {book.genre || "Uncategorized"}
                       </span>
-                      {book.content_type === 'rental' && (
-                        <>
-                          <span className="text-xs text-gray-500">
-                            ${book.rental_price} / rental
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {book.rental_count} rentals
-                          </span>
-                        </>
-                      )}
-                      {book.content_type === 'free' && (
-                        <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                          Free
-                        </span>
-                      )}
+                      <span className="text-xs text-gray-500">
+                        {book.rental_count} rentals
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -131,9 +110,8 @@ const Books = () => {
           </div>
         )}
       </main>
-      <BottomNav />
     </div>
   );
 };
 
-export default Books;
+export default AdminBooks;
