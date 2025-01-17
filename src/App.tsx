@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Sidebar } from "@/components/Sidebar";
-import { MobileNav } from "@/components/MobileNav";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import Index from "@/pages/Index";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -23,11 +23,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-gray-50">
-          <BrowserRouter>
-            <div className="flex">
-              <Sidebar />
-              <main className="flex-1 md:ml-64 pb-24 md:pb-0">
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full bg-gray-50">
+            <BrowserRouter>
+              <AppSidebar />
+              <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/landing" element={<Landing />} />
@@ -44,11 +44,10 @@ function App() {
                   <Route path="/books/:id" element={<BookDetails />} />
                 </Routes>
               </main>
-            </div>
-            <MobileNav />
-            <Toaster />
-          </BrowserRouter>
-        </div>
+              <Toaster />
+            </BrowserRouter>
+          </div>
+        </SidebarProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
