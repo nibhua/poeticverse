@@ -17,11 +17,10 @@ import CreateBook from "@/pages/CreateBook";
 import AdminBooks from "@/pages/AdminBooks";
 import BookDetails from "@/pages/BookDetails";
 
-// Create a client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: 1,
     },
   },
@@ -31,11 +30,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full bg-gray-50">
+        <SidebarProvider defaultOpen={false}>
+          <div className="min-h-screen flex w-full bg-background">
             <BrowserRouter>
               <AppSidebar />
-              <main className="flex-1">
+              <main className="flex-1 w-full">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/landing" element={<Landing />} />

@@ -14,7 +14,7 @@ export default {
       center: true,
       padding: "1rem",
       screens: {
-        "2xl": "1000px", // Reduced max width for better content display
+        "2xl": "1000px",
       },
     },
     extend: {
@@ -24,6 +24,12 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        sidebar: {
+          DEFAULT: "hsl(var(--background))",
+          foreground: "hsl(var(--foreground))",
+          border: "hsl(var(--border))",
+          accent: "hsl(var(--accent))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

@@ -66,7 +66,7 @@ export function AppSidebar() {
         <Menu className="h-5 w-5" />
       </Button>
       
-      <Sidebar>
+      <Sidebar className="w-64 bg-background border-r">
         <SidebarContent>
           <SidebarGroup>
             <div className="flex items-center justify-between p-4">
@@ -85,8 +85,8 @@ export function AppSidebar() {
                       <Link
                         to={item.path}
                         className={cn(
-                          "flex items-center gap-2",
-                          isActive(item.path) && "font-medium"
+                          "flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent",
+                          isActive(item.path) && "bg-accent font-medium"
                         )}
                       >
                         <item.icon className="h-5 w-5" />
