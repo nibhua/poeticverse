@@ -10,6 +10,30 @@ import { ProfilePosts } from "@/components/profile/ProfilePosts";
 const Profile = () => {
   const { username } = useParams();
   const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const navigate = useNavigate();
+
+  // If no username provided, redirect to current user's profile
+  useEffect(() => {
+    const redirectToUserProfile = async () => {
+      if (!username) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/login");
+          return;
+        }
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile) {
+          navigate(`/profile/${profile.username}`);
+        }
+      }
+    };
+    redirectToUserProfile();
+  }, [username, navigate]);
 
   // Fetch profile data
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -35,6 +59,7 @@ const Profile = () => {
 
       return data;
     },
+    enabled: !!username,
   });
 
   // Fetch posts
@@ -117,7 +142,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 md:pb-0">
       <div className="bg-white">
         <ProfileHeader
           username={profile.username}
@@ -128,7 +153,7 @@ const Profile = () => {
           followingCount={followingCount}
           postsCount={posts.length}
           isCurrentUser={isCurrentUser}
-          userId={profile.id} // Added userId prop
+          userId={profile.id}
         />
         
         {postsLoading ? (
@@ -136,10 +161,9 @@ const Profile = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
           </div>
         ) : (
-          <ProfilePosts posts={posts} username={profile.username} />
+          <ProfilePosts posts={posts} username={profile.username} profilePicUrl={profile.profile_pic_url} />
         )}
       </div>
-      <BottomNav />
     </div>
   );
 };

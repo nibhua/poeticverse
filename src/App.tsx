@@ -27,7 +27,7 @@ function App() {
           <BrowserRouter>
             <div className="flex">
               <Sidebar />
-              <main className="flex-1 md:ml-64 pb-20 md:pb-0">
+              <main className="flex-1 md:ml-64 pb-24 md:pb-0">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/landing" element={<Landing />} />
