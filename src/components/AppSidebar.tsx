@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Home, Search, PlusSquare, UserRound, BookOpen } from "lucide-react";
+import { Home, Search, PlusSquare, UserRound, BookOpen, Menu } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,12 +9,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 export function AppSidebar() {
   const location = useLocation();
   const username = localStorage.getItem("username");
+  const { toggleSidebar } = useSidebar();
 
   const menuItems = [
     {
@@ -52,36 +56,50 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.path)}
-                    tooltip={item.title}
-                  >
-                    <Link
-                      to={item.path}
-                      className={cn(
-                        "flex items-center gap-2",
-                        isActive(item.path) && "font-medium"
-                      )}
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden"
+        onClick={toggleSidebar}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+      
+      <Sidebar>
+        <SidebarContent>
+          <SidebarGroup>
+            <div className="flex items-center justify-between p-4">
+              <SidebarGroupLabel>Menu</SidebarGroupLabel>
+              <SidebarTrigger />
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
+                      tooltip={item.title}
                     >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+                      <Link
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-2",
+                          isActive(item.path) && "font-medium"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+    </>
   );
 }
