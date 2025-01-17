@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfilePosts } from "@/components/profile/ProfilePosts";
@@ -23,17 +22,20 @@ const Profile = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["profile", username],
     queryFn: async () => {
+      console.log("Fetching profile for username:", username);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        throw new Error(error.message);
+        console.error("Error fetching profile:", error);
+        throw error;
       }
-      return data;
-    }
+      return data as Profile;
+    },
+    enabled: !!username,
   });
 
   useEffect(() => {
@@ -52,7 +54,7 @@ const Profile = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }

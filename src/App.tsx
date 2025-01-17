@@ -17,7 +17,15 @@ import CreateBook from "@/pages/CreateBook";
 import AdminBooks from "@/pages/AdminBooks";
 import BookDetails from "@/pages/BookDetails";
 
-const queryClient = new QueryClient();
+// Create a client with default options
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
