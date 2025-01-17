@@ -34,6 +34,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/search" element={<Search />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="/profile/:username" element={<Profile />} />
                   <Route path="/profile/:username/edit" element={<EditProfile />} />
                   <Route path="/create-post" element={<CreatePost />} />

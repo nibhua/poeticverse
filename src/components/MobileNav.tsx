@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils";
 
 export const MobileNav = () => {
   const location = useLocation();
-  const username = localStorage.getItem("username") || "";
+  const username = localStorage.getItem("username");
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 z-50 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 md:hidden z-50">
       <div className="max-w-lg mx-auto flex justify-between items-center">
         <Link
           to="/"
@@ -58,7 +58,7 @@ export const MobileNav = () => {
         </Link>
 
         <Link
-          to={`/profile/${username}`}
+          to={username ? `/profile/${username}` : "/profile"}
           className={cn(
             "flex flex-col items-center text-xs",
             location.pathname.startsWith("/profile") ? "text-blue-500" : "text-gray-500"
@@ -70,4 +70,4 @@ export const MobileNav = () => {
       </div>
     </nav>
   );
-};
+}
