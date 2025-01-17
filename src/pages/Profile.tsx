@@ -6,32 +6,46 @@ import { useQuery } from "@tanstack/react-query";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfilePosts } from "@/components/profile/ProfilePosts";
 
+interface Profile {
+  id: string;
+  username: string;
+  full_name: string | null;
+  bio: string | null;
+  profile_pic_url: string | null;
+}
+
 const Profile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
 
-  const { data, isLoading } = useQuery(["profile", username], async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("username", username)
-      .single();
+  const { data, isLoading } = useQuery({
+    queryKey: ["profile", username],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("username", username)
+        .single();
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data;
     }
-    return data;
   });
 
   useEffect(() => {
     if (data) {
       setProfile(data);
-      const user = supabase.auth.user();
-      if (user && user.id === data.id) {
-        setIsOwnProfile(true);
-      }
+      const checkCurrentUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user.id === data.id) {
+          setIsCurrentUser(true);
+        }
+      };
+      checkCurrentUser();
     }
   }, [data]);
 
@@ -62,10 +76,17 @@ const Profile = () => {
           fullName={profile.full_name}
           bio={profile.bio}
           profilePicUrl={profile.profile_pic_url}
-          isOwnProfile={isOwnProfile}
+          followersCount={0}
+          followingCount={0}
+          postsCount={0}
+          isCurrentUser={isCurrentUser}
           userId={profile.id}
         />
-        <ProfilePosts userId={profile.id} />
+        <ProfilePosts
+          posts={[]}
+          username={profile.username}
+          profilePicUrl={profile.profile_pic_url}
+        />
       </div>
     </div>
   );
