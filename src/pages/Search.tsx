@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Search as SearchIcon } from "lucide-react";
@@ -74,8 +73,6 @@ const Search = () => {
           </Link>
         ))}
       </div>
-
-      <BottomNav />
     </div>
   );
 };

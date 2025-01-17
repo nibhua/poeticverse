@@ -1,5 +1,4 @@
 import { Post } from "@/components/Post";
-import { BottomNav } from "@/components/BottomNav";
 import { TemporaryPostsSection } from "@/components/temporary-posts/TemporaryPostsSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,7 +140,7 @@ const Index = () => {
   const allPosts = [...(followedPosts || []), ...(randomPosts || [])];
 
   return (
-    <div className="pb-20">
+    <div>
       <header className="sticky top-0 bg-white border-b p-4 z-10">
         <h1 className="text-xl font-bold text-center">Home</h1>
       </header>
@@ -166,7 +165,6 @@ const Index = () => {
           ))
         )}
       </main>
-      <BottomNav />
     </div>
   );
 };

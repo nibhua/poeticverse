@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { Image as ImageIcon, X, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -174,8 +173,6 @@ const CreatePost = () => {
           className={postType === "text" ? "min-h-[200px]" : "min-h-[100px]"}
         />
       </div>
-
-      <BottomNav />
     </div>
   );
 };
