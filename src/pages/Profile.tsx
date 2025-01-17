@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { BottomNav } from "@/components/BottomNav";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -142,7 +141,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="pb-20 md:pb-0">
+    <div>
       <div className="bg-white">
         <ProfileHeader
           username={profile.username}

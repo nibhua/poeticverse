@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +39,7 @@ const Books = () => {
   }
 
   return (
-    <div className="pb-20">
+    <div>
       <header className="sticky top-0 bg-white border-b p-4 z-10">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold">Poetry Books</h1>
@@ -131,7 +130,6 @@ const Books = () => {
           </div>
         )}
       </main>
-      <BottomNav />
     </div>
   );
 };
