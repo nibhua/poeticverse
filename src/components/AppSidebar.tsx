@@ -44,7 +44,7 @@ export function AppSidebar() {
     {
       title: "Profile",
       icon: UserRound,
-      path: username ? `/profile/${username}` : "/profile",
+      path: username ? `/profile/${username}` : "/login",
     },
   ];
 
@@ -60,7 +60,7 @@ export function AppSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="fixed top-4 left-4 z-50 md:hidden bg-background"
         onClick={toggleSidebar}
       >
         <Menu className="h-5 w-5" />
