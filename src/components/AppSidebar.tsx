@@ -60,13 +60,13 @@ export function AppSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden bg-background"
+        className="fixed top-4 left-4 z-50 bg-background md:hidden"
         onClick={toggleSidebar}
       >
         <Menu className="h-5 w-5" />
       </Button>
       
-      <Sidebar className="w-64 bg-background border-r">
+      <Sidebar className="fixed left-0 top-0 h-full w-64 bg-background border-r">
         <SidebarContent>
           <SidebarGroup>
             <div className="flex items-center justify-between p-4">
@@ -85,7 +85,7 @@ export function AppSidebar() {
                       <Link
                         to={item.path}
                         className={cn(
-                          "flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent",
+                          "flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent",
                           isActive(item.path) && "bg-accent font-medium"
                         )}
                       >
