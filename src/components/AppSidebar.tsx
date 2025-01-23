@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function AppSidebar() {
   const location = useLocation();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, state } = useSidebar();
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function AppSidebar() {
     {
       title: "Create",
       icon: PlusSquare,
-      path: "/create",
+      path: "/create-post",
     },
     {
       title: "Books",
@@ -91,7 +91,10 @@ export function AppSidebar() {
         <Menu className="h-5 w-5" />
       </Button>
 
-      <nav className="fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out">
+      <nav className={cn(
+        "fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out",
+        state === "collapsed" ? "-translate-x-full" : "translate-x-0"
+      )}>
         <div className="p-4 space-y-4">
           <div className="h-14" /> {/* Spacer for the menu button */}
           {menuItems.map((item) => (

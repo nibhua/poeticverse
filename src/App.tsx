@@ -33,24 +33,28 @@ function App() {
         <SidebarProvider defaultOpen={false}>
           <div className="min-h-screen flex w-full bg-background">
             <BrowserRouter>
-              <AppSidebar />
-              <main className="flex-1 w-full">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/profile/:username" element={<Profile />} />
-                  <Route path="/profile/:username/edit" element={<EditProfile />} />
-                  <Route path="/create-post" element={<CreatePost />} />
-                  <Route path="/books" element={<Books />} />
-                  <Route path="/books/create" element={<CreateBook />} />
-                  <Route path="/books/admin" element={<AdminBooks />} />
-                  <Route path="/books/:id" element={<BookDetails />} />
-                </Routes>
-              </main>
+              <div className="flex w-full">
+                <AppSidebar />
+                <main className="flex-1 w-full transition-all duration-200 ease-in-out">
+                  <div className="container mx-auto p-4">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/landing" element={<Landing />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<Signup />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/profile/:username" element={<Profile />} />
+                      <Route path="/profile/:username/edit" element={<EditProfile />} />
+                      <Route path="/create-post" element={<CreatePost />} />
+                      <Route path="/books" element={<Books />} />
+                      <Route path="/books/create" element={<CreateBook />} />
+                      <Route path="/books/admin" element={<AdminBooks />} />
+                      <Route path="/books/:id" element={<BookDetails />} />
+                    </Routes>
+                  </div>
+                </main>
+              </div>
               <Toaster />
             </BrowserRouter>
           </div>
