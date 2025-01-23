@@ -28,6 +28,29 @@ const Profile = () => {
   const navigate = useNavigate();
   const [isCurrentUser, setIsCurrentUser] = useState(false);
 
+  // Redirect to login if no username provided
+  useEffect(() => {
+    if (!username) {
+      const redirectToProfile = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (profile?.username) {
+            navigate(`/profile/${profile.username}`);
+          }
+        } else {
+          navigate("/login");
+        }
+      };
+      redirectToProfile();
+    }
+  }, [username, navigate]);
+
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", username],
     queryFn: async () => {

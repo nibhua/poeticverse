@@ -1,17 +1,13 @@
-import { useLocation, Link } from "react-router-dom";
-import { Home, Search, PlusSquare, UserRound, BookOpen, Menu } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
+  Menu,
+  Home,
+  Search,
+  BookOpen,
+  PlusSquare,
+  UserRound,
+} from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
@@ -20,18 +16,37 @@ import { supabase } from "@/integrations/supabase/client";
 export function AppSidebar() {
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
-  const [userId, setUserId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check auth state on mount and auth changes
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Current session:", session);
-      setUserId(session?.user?.id || null);
-    });
+    const fetchUserProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        console.log("Fetching profile for user:", session.user.id);
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", session.user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+        } else if (profile) {
+          console.log("Found profile:", profile);
+          setUsername(profile.username);
+        }
+      }
+    };
+
+    fetchUserProfile();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", session);
-      setUserId(session?.user?.id || null);
+      if (session?.user?.id) {
+        fetchUserProfile();
+      } else {
+        setUsername(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -51,7 +66,7 @@ export function AppSidebar() {
     {
       title: "Create",
       icon: PlusSquare,
-      path: "/create-post",
+      path: "/create",
     },
     {
       title: "Books",
@@ -61,19 +76,12 @@ export function AppSidebar() {
     {
       title: "Profile",
       icon: UserRound,
-      path: userId ? `/profile` : "/login",
+      path: username ? `/profile/${username}` : "/login",
     },
   ];
 
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
-  };
-
   return (
-    <>
+    <div className="relative">
       <Button
         variant="ghost"
         size="icon"
@@ -82,41 +90,27 @@ export function AppSidebar() {
       >
         <Menu className="h-5 w-5" />
       </Button>
-      
-      <Sidebar className="fixed left-0 top-0 h-full w-64 bg-background border-r">
-        <SidebarContent>
-          <SidebarGroup>
-            <div className="flex items-center justify-between p-4">
-              <SidebarGroupLabel>Menu</SidebarGroupLabel>
-              <SidebarTrigger />
-            </div>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.path)}
-                      tooltip={item.title}
-                    >
-                      <Link
-                        to={item.path}
-                        className={cn(
-                          "flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent",
-                          isActive(item.path) && "bg-accent font-medium"
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
-    </>
+
+      <nav className="fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out">
+        <div className="p-4 space-y-4">
+          <div className="h-14" /> {/* Spacer for the menu button */}
+          {menuItems.map((item) => (
+            <a
+              key={item.title}
+              href={item.path}
+              className={cn(
+                "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
+                location.pathname === item.path
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              <span>{item.title}</span>
+            </a>
+          ))}
+        </div>
+      </nav>
+    </div>
   );
 }
