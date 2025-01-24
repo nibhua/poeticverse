@@ -92,7 +92,7 @@ export function AppSidebar() {
       </Button>
 
       <nav className={cn(
-        "fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out",
+        "fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out z-40",
         state === "collapsed" ? "-translate-x-full" : "translate-x-0"
       )}>
         <div className="p-4 space-y-4">
