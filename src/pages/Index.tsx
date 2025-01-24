@@ -83,7 +83,7 @@ const Index = () => {
       }));
     },
     staleTime: 30000, // Cache data for 30 seconds
-    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   // Fetch random posts with like counts and profile information
@@ -117,7 +117,7 @@ const Index = () => {
       }));
     },
     staleTime: 30000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   if (isLoading || followedPostsLoading || randomPostsLoading) {
