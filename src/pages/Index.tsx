@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
 import { Post } from "@/components/Post";
 import { TemporaryPostsSection } from "@/components/temporary-posts/TemporaryPostsSection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -43,7 +43,7 @@ const Index = () => {
     };
   }, [navigate]);
 
-  // Fetch posts from followed users with like counts
+  // Fetch posts from followed users with like counts and profile information
   const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
     queryKey: ['followed-posts', userId],
     enabled: !!userId && !isLoading,
@@ -62,7 +62,10 @@ const Index = () => {
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username),
+          profiles:user_id (
+            username,
+            profile_pic_url
+          ),
           likes:likes (count)
         `)
         .in('user_id', followedIds)
@@ -81,7 +84,7 @@ const Index = () => {
     },
   });
 
-  // Fetch random posts with like counts
+  // Fetch random posts with like counts and profile information
   const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
     queryKey: ['random-posts', userId],
     enabled: !!userId && !isLoading,
@@ -91,7 +94,10 @@ const Index = () => {
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username),
+          profiles:user_id (
+            username,
+            profile_pic_url
+          ),
           likes:likes (count)
         `)
         .not('user_id', 'eq', userId)
@@ -109,25 +115,6 @@ const Index = () => {
       }));
     },
   });
-
-  // Set up real-time subscription for likes
-  useEffect(() => {
-    const channel = supabase
-      .channel('public:likes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'likes' },
-        () => {
-          // Invalidate queries to refetch data
-          queryClient.invalidateQueries({ queryKey: ['followed-posts'] });
-          queryClient.invalidateQueries({ queryKey: ['random-posts'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   if (isLoading || followedPostsLoading || randomPostsLoading) {
     return (
@@ -161,6 +148,7 @@ const Index = () => {
               imageUrl={post.image_url}
               likes={post.likes}
               comments={0}
+              profilePicUrl={post.profiles.profile_pic_url}
             />
           ))
         )}
