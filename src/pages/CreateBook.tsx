@@ -55,6 +55,12 @@ const CreateBook = () => {
       setIsSubmitting(true);
       console.log("Submitting book data:", data);
 
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       let coverImageUrl = null;
       if (data.coverImage) {
         const fileExt = data.coverImage.name.split('.').pop();
@@ -84,6 +90,7 @@ const CreateBook = () => {
         is_public: data.isPublic,
         content_type: data.contentType,
         rental_price: data.rentalPrice,
+        user_id: user.id, // Set the user_id to the current user's ID
       });
 
       if (error) throw error;
