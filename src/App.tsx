@@ -20,7 +20,7 @@ import BookDetails from "@/pages/BookDetails";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 5, // Increase stale time to reduce refetches
       retry: 1,
     },
   },
@@ -35,8 +35,8 @@ function App() {
             <BrowserRouter>
               <div className="flex w-full">
                 <AppSidebar />
-                <main className="flex-1 w-full transition-all duration-200 ease-in-out">
-                  <div className="max-w-[600px] mx-auto px-4 py-6">
+                <main className="flex-1 transition-all duration-200 ease-in-out">
+                  <div className="max-w-[600px] mx-auto px-4 py-6 w-full">
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/landing" element={<Landing />} />

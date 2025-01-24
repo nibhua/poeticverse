@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import {
   Menu,
   Home,
@@ -98,9 +98,9 @@ export function AppSidebar() {
         <div className="p-4 space-y-4">
           <div className="h-14" /> {/* Spacer for the menu button */}
           {menuItems.map((item) => (
-            <a
+            <Link
               key={item.title}
-              href={item.path}
+              to={item.path}
               className={cn(
                 "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
                 location.pathname === item.path
@@ -110,7 +110,7 @@ export function AppSidebar() {
             >
               <item.icon className="h-5 w-5" />
               <span>{item.title}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </nav>
