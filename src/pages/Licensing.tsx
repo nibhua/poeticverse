@@ -16,8 +16,8 @@ export default function Licensing() {
         .from("licenses")
         .select(`
           *,
-          requester:requester_id(username),
-          owner:owner_id(username)
+          requester:requester_id(id, username),
+          owner:owner_id(id, username)
         `)
         .or(`requester_id.eq.${user.id},owner_id.eq.${user.id}`)
         .order("created_at", { ascending: false });
