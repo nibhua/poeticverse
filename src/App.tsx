@@ -45,9 +45,9 @@ function App() {
         <SidebarProvider defaultOpen={false}>
           <div className="min-h-screen flex w-full bg-background">
             <BrowserRouter>
-              <div className="flex w-full">
+              <div className="flex w-full relative">
                 <AppSidebar />
-                <main className="flex-1 transition-all duration-200 ease-in-out">
+                <main className="flex-1 transition-all duration-200 ease-in-out relative z-0">
                   <div className="max-w-[800px] mx-auto px-6 py-8 w-full">
                     <Routes>
                       <Route path="/" element={<Index />} />
