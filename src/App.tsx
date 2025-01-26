@@ -48,7 +48,7 @@ function App() {
               <div className="flex w-full">
                 <AppSidebar />
                 <main className="flex-1 transition-all duration-200 ease-in-out">
-                  <div className="max-w-[600px] mx-auto px-4 py-6 w-full">
+                  <div className="max-w-[800px] mx-auto px-6 py-8 w-full">
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/landing" element={<Landing />} />

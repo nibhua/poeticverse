@@ -122,26 +122,28 @@ export function AppSidebar() {
       </Button>
 
       <nav className={cn(
-        "fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out z-40",
+        "fixed top-0 left-0 h-full bg-background border-r w-56 transform transition-transform duration-200 ease-in-out z-40",
         state === "collapsed" ? "-translate-x-full" : "translate-x-0"
       )}>
-        <div className="p-4 space-y-4">
+        <div className="h-full flex flex-col">
           <div className="h-14" /> {/* Spacer for the menu button */}
-          {menuItems.map((item) => (
-            <Link
-              key={item.title}
-              to={item.path}
-              className={cn(
-                "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-                location.pathname === item.path
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.title}</span>
-            </Link>
-          ))}
+          <div className="flex-1 overflow-y-auto px-4 py-2">
+            {menuItems.map((item) => (
+              <Link
+                key={item.title}
+                to={item.path}
+                className={cn(
+                  "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors mb-1",
+                  location.pathname === item.path
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.title}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </nav>
     </div>
