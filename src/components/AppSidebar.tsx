@@ -6,6 +6,11 @@ import {
   BookOpen,
   PlusSquare,
   UserRound,
+  Headphones,
+  Copyright,
+  Users,
+  Trophy,
+  ListChecks,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -72,6 +77,31 @@ export function AppSidebar() {
       title: "Books",
       icon: BookOpen,
       path: "/books",
+    },
+    {
+      title: "Audio Library",
+      icon: Headphones,
+      path: "/audio-library",
+    },
+    {
+      title: "Licensing",
+      icon: Copyright,
+      path: "/licensing",
+    },
+    {
+      title: "Workshops",
+      icon: Users,
+      path: "/workshops",
+    },
+    {
+      title: "Competitions",
+      icon: Trophy,
+      path: "/competitions",
+    },
+    {
+      title: "Challenges",
+      icon: ListChecks,
+      path: "/challenges",
     },
     {
       title: "Profile",

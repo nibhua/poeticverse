@@ -16,11 +16,23 @@ import Books from "@/pages/Books";
 import CreateBook from "@/pages/CreateBook";
 import AdminBooks from "@/pages/AdminBooks";
 import BookDetails from "@/pages/BookDetails";
+import AudioLibrary from "@/pages/AudioLibrary";
+import CreateAudio from "@/pages/CreateAudio";
+import Licensing from "@/pages/Licensing";
+import Workshops from "@/pages/Workshops";
+import CreateWorkshop from "@/pages/CreateWorkshop";
+import WorkshopDetails from "@/pages/WorkshopDetails";
+import Competitions from "@/pages/Competitions";
+import CreateCompetition from "@/pages/CreateCompetition";
+import CompetitionDetails from "@/pages/CompetitionDetails";
+import Challenges from "@/pages/Challenges";
+import CreateChallenge from "@/pages/CreateChallenge";
+import ChallengeDetails from "@/pages/ChallengeDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // Increase stale time to reduce refetches
+      staleTime: 1000 * 60 * 5,
       retry: 1,
     },
   },
@@ -47,10 +59,34 @@ function App() {
                       <Route path="/profile/:username" element={<Profile />} />
                       <Route path="/profile/:username/edit" element={<EditProfile />} />
                       <Route path="/create-post" element={<CreatePost />} />
+                      
+                      {/* Books routes */}
                       <Route path="/books" element={<Books />} />
                       <Route path="/books/create" element={<CreateBook />} />
                       <Route path="/books/admin" element={<AdminBooks />} />
                       <Route path="/books/:id" element={<BookDetails />} />
+                      
+                      {/* Audio Library routes */}
+                      <Route path="/audio-library" element={<AudioLibrary />} />
+                      <Route path="/audio-library/create" element={<CreateAudio />} />
+                      
+                      {/* Licensing routes */}
+                      <Route path="/licensing" element={<Licensing />} />
+                      
+                      {/* Workshops routes */}
+                      <Route path="/workshops" element={<Workshops />} />
+                      <Route path="/workshops/create" element={<CreateWorkshop />} />
+                      <Route path="/workshops/:id" element={<WorkshopDetails />} />
+                      
+                      {/* Competitions routes */}
+                      <Route path="/competitions" element={<Competitions />} />
+                      <Route path="/competitions/create" element={<CreateCompetition />} />
+                      <Route path="/competitions/:id" element={<CompetitionDetails />} />
+                      
+                      {/* Challenges routes */}
+                      <Route path="/challenges" element={<Challenges />} />
+                      <Route path="/challenges/create" element={<CreateChallenge />} />
+                      <Route path="/challenges/:id" element={<ChallengeDetails />} />
                     </Routes>
                   </div>
                 </main>
