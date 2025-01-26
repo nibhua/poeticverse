@@ -37,6 +37,7 @@ export default function ChallengeDetails() {
       
       if (error) throw error;
       return data;
+    
     },
   });
 
