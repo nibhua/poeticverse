@@ -50,7 +50,8 @@ const CreateBook = () => {
     }
   };
 
-  useState(() => {
+  // Use useEffect for checking admin status
+  useEffect(() => {
     checkAdminStatus();
   }, []);
 
