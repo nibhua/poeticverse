@@ -21,6 +21,7 @@ import {
 import { uploadPDF } from "@/utils/fileUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface CopyrightFormData {
   title: string;
@@ -32,6 +33,7 @@ interface CopyrightFormData {
 
 export function CopyrightRegistrationForm() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CopyrightFormData>();
 
@@ -45,13 +47,26 @@ export function CopyrightRegistrationForm() {
         if (!fileUrl) return;
       }
 
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.user) {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast({
+          title: "Error",
+          description: "Authentication error. Please try logging in again.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      if (!sessionData?.session?.user) {
         toast({
           title: "Error",
           description: "You must be logged in to register a copyright",
           variant: "destructive",
         });
+        navigate("/login");
         return;
       }
 
@@ -59,7 +74,7 @@ export function CopyrightRegistrationForm() {
         content_type: data.workType,
         purpose: "copyright_registration",
         content_id: crypto.randomUUID(),
-        requester_id: session.user.id,
+        requester_id: sessionData.session.user.id,
         status: "pending",
       });
 
