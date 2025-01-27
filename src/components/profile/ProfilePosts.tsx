@@ -77,7 +77,7 @@ export const ProfilePosts = ({ posts, username, profilePicUrl }: ProfilePostsPro
   }
 
   return (
-    <div className="max-w-[935px] mx-auto mt-8">
+    <div className="w-full max-w-[600px] mx-auto mt-8">
       <div className="space-y-6">
         {(postsWithLikes || posts).map((post: PostType | PostWithCounts) => (
           <Post

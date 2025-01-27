@@ -4,8 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, FileText, Clock, DollarSign } from "lucide-react";
+import { CopyrightRegistrationForm } from "@/components/copyright/CopyrightRegistrationForm";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Licensing() {
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  
   const { data: licenses, isLoading } = useQuery({
     queryKey: ["licenses"],
     queryFn: async () => {
@@ -35,11 +40,20 @@ export default function Licensing() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Licensing</h1>
-        <Button>
+        <Button onClick={() => setShowRegistrationForm(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Register Copyright
         </Button>
       </div>
+
+      <Dialog open={showRegistrationForm} onOpenChange={setShowRegistrationForm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Register Copyright</DialogTitle>
+          </DialogHeader>
+          <CopyrightRegistrationForm />
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="requests" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -100,7 +114,7 @@ export default function Licensing() {
             <FileText className="mx-auto h-12 w-12 mb-4" />
             <h3 className="text-lg font-medium mb-2">No Copyrighted Works Yet</h3>
             <p className="mb-4">Start by registering your poems for copyright protection.</p>
-            <Button>
+            <Button onClick={() => setShowRegistrationForm(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Register New Copyright
             </Button>
