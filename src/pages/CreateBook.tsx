@@ -42,7 +42,7 @@ const CreateBook = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .maybeSingle(); // Changed from single() to maybeSingle()
+        .maybeSingle();
 
       if (error) {
         console.error('Error checking role:', error);
@@ -55,7 +55,6 @@ const CreateBook = () => {
     }
   };
 
-  // Use useEffect for checking admin status
   useEffect(() => {
     checkAdminStatus();
   }, []);
