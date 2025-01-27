@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, BookOpen, Clock } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Download } from "lucide-react";
 import { motion } from "framer-motion";
 
 const BookDetails = () => {
@@ -29,19 +29,78 @@ const BookDetails = () => {
     },
   });
 
-  const handleRentBook = async () => {
-    try {
-      // Here we would implement the rental logic
-      // For now, just show a toast
-      toast({
-        title: "Coming Soon",
-        description: "Book rental functionality will be available soon!",
-      });
-    } catch (error) {
-      console.error("Error renting book:", error);
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  const handleDownload = async () => {
+    if (!book?.pdf_url) {
       toast({
         title: "Error",
-        description: "Failed to rent book. Please try again.",
+        description: "No PDF available for this book",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user is the owner or if the book is free
+    const isOwner = currentUser?.id === book.user_id;
+    const isFree = book.content_type === 'free';
+
+    if (!isOwner && !isFree && book.payment_status !== 'paid') {
+      // Initiate payment flow
+      try {
+        const { data: { url }, error } = await supabase.functions.invoke('create-checkout', {
+          body: { 
+            priceId: book.price,
+            bookId: book.id,
+            type: 'book'
+          }
+        });
+
+        if (error) throw error;
+        window.location.href = url;
+      } catch (error) {
+        console.error('Payment initiation error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initiate payment. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('books')
+        .download(book.pdf_url.split('/').pop());
+
+      if (error) throw error;
+
+      // Create a download link
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${book.title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: "Download started successfully",
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download the book. Please try again.",
         variant: "destructive",
       });
     }
@@ -114,24 +173,27 @@ const BookDetails = () => {
               </div>
             </div>
 
-            {book.content_type === 'rental' && (
+            {book.content_type === 'paid' && (
               <div className="mb-6">
-                <p className="text-sm font-semibold mb-1">Rental Price</p>
-                <p className="text-lg">${book.rental_price}</p>
+                <p className="text-sm font-semibold mb-1">Price</p>
+                <p className="text-lg">${book.price}</p>
               </div>
             )}
 
-            {book.content_type === 'rental' && (
+            {book.pdf_url && (
               <Button
-                onClick={handleRentBook}
-                className="w-full"
+                onClick={handleDownload}
+                className="w-full flex items-center justify-center gap-2"
               >
-                Rent Book
+                <Download className="h-4 w-4" />
+                {book.content_type === 'free' || currentUser?.id === book.user_id
+                  ? 'Download Book'
+                  : `Buy and Download ($${book.price})`}
               </Button>
             )}
 
-            {book.content_type === 'free' && (
-              <div className="bg-gray-50 p-4 rounded-lg">
+            {book.content_type === 'free' && book.content && (
+              <div className="mt-6 bg-gray-50 p-4 rounded-lg">
                 <h2 className="font-semibold mb-4">Preview Content</h2>
                 <p className="whitespace-pre-wrap text-gray-700">{book.content}</p>
               </div>
