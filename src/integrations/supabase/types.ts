@@ -410,6 +410,9 @@ export type Database = {
           id: string
           is_admin_content: boolean | null
           is_public: boolean | null
+          payment_status: string | null
+          pdf_url: string | null
+          price: number | null
           publication_date: string | null
           rental_count: number | null
           rental_price: number | null
@@ -427,6 +430,9 @@ export type Database = {
           id?: string
           is_admin_content?: boolean | null
           is_public?: boolean | null
+          payment_status?: string | null
+          pdf_url?: string | null
+          price?: number | null
           publication_date?: string | null
           rental_count?: number | null
           rental_price?: number | null
@@ -444,6 +450,9 @@ export type Database = {
           id?: string
           is_admin_content?: boolean | null
           is_public?: boolean | null
+          payment_status?: string | null
+          pdf_url?: string | null
+          price?: number | null
           publication_date?: string | null
           rental_count?: number | null
           rental_price?: number | null
@@ -601,6 +610,35 @@ export type Database = {
             foreignKeyName: "temporary_posts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

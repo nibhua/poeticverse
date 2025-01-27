@@ -9,6 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { uploadPDF } from "@/utils/fileUpload";
 
 interface CreateBookForm {
   title: string;
@@ -18,7 +20,9 @@ interface CreateBookForm {
   coverImage?: File;
   isPublic: boolean;
   contentType: 'free' | 'paid' | 'rental';
-  rentalPrice?: number;
+  price?: number;
+  pdfFile?: FileList;
+  isAdminContent: boolean;
 }
 
 const CreateBook = () => {
@@ -26,6 +30,29 @@ const CreateBook = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  const checkAdminStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      setIsAdmin(roleData?.role === 'admin');
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
+
+  useState(() => {
+    checkAdminStatus();
+  }, []);
 
   const form = useForm<CreateBookForm>({
     defaultValues: {
@@ -35,6 +62,7 @@ const CreateBook = () => {
       content: "",
       isPublic: false,
       contentType: "free",
+      isAdminContent: false,
     },
   });
 
@@ -55,7 +83,6 @@ const CreateBook = () => {
       setIsSubmitting(true);
       console.log("Submitting book data:", data);
 
-      // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("User not authenticated");
@@ -70,15 +97,26 @@ const CreateBook = () => {
           .from('user-images')
           .upload(filePath, data.coverImage);
 
-        if (uploadError) {
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
           .from('user-images')
           .getPublicUrl(filePath);
 
         coverImageUrl = publicUrl;
+      }
+
+      let pdfUrl = null;
+      if (data.pdfFile?.[0]) {
+        pdfUrl = await uploadPDF(data.pdfFile[0]);
+        if (!pdfUrl) {
+          toast({
+            title: "Error",
+            description: "Failed to upload PDF file",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       const { error } = await supabase.from('poetry_books').insert({
@@ -89,8 +127,11 @@ const CreateBook = () => {
         cover_image_url: coverImageUrl,
         is_public: data.isPublic,
         content_type: data.contentType,
-        rental_price: data.rentalPrice,
-        user_id: user.id, // Set the user_id to the current user's ID
+        price: data.price,
+        pdf_url: pdfUrl,
+        is_admin_content: data.isAdminContent,
+        user_id: user.id,
+        payment_status: data.contentType === 'free' ? 'not_required' : 'unpaid',
       });
 
       if (error) throw error;
@@ -175,10 +216,29 @@ const CreateBook = () => {
 
             <FormField
               control={form.control}
+              name="pdfFile"
+              render={({ field: { onChange, value, ...field } }) => (
+                <FormItem>
+                  <FormLabel>Upload PDF (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => onChange(e.target.files)}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>Content (Optional if PDF is uploaded)</FormLabel>
                   <FormControl>
                     <Textarea 
                       {...field} 
@@ -223,6 +283,25 @@ const CreateBook = () => {
               </div>
             </div>
 
+            {isAdmin && (
+              <FormField
+                control={form.control}
+                name="isAdminContent"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="!mt-0">Mark as Admin Content</FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="contentType"
@@ -241,7 +320,6 @@ const CreateBook = () => {
                     <SelectContent>
                       <SelectItem value="free">Free</SelectItem>
                       <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="rental">Rental</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -249,20 +327,20 @@ const CreateBook = () => {
               )}
             />
 
-            {form.watch("contentType") === "rental" && (
+            {form.watch("contentType") === "paid" && (
               <FormField
                 control={form.control}
-                name="rentalPrice"
+                name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rental Price</FormLabel>
+                    <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         {...field}
                         onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                        placeholder="Enter rental price"
+                        placeholder="Enter price"
                       />
                     </FormControl>
                     <FormMessage />
@@ -277,11 +355,9 @@ const CreateBook = () => {
               render={({ field }) => (
                 <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <input
-                      type="checkbox"
+                    <Switch
                       checked={field.value}
-                      onChange={field.onChange}
-                      className="h-4 w-4"
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
                   <FormLabel className="!mt-0">Make this book public</FormLabel>
