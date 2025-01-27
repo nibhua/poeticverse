@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,11 +38,16 @@ const CreateBook = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: roleData } = await supabase
+      const { data: roleData, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Changed from single() to maybeSingle()
+
+      if (error) {
+        console.error('Error checking role:', error);
+        return;
+      }
 
       setIsAdmin(roleData?.role === 'admin');
     } catch (error) {
