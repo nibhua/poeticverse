@@ -648,21 +648,27 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          payment_screenshot_url: string | null
           payment_status: string | null
+          status: string | null
           user_id: string | null
           workshop_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
+          payment_screenshot_url?: string | null
           payment_status?: string | null
+          status?: string | null
           user_id?: string | null
           workshop_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          payment_screenshot_url?: string | null
           payment_status?: string | null
+          status?: string | null
           user_id?: string | null
           workshop_id?: string | null
         }
@@ -692,6 +698,8 @@ export type Database = {
           id: string
           is_paid: boolean | null
           max_participants: number | null
+          meeting_link: string | null
+          payment_qr_code_url: string | null
           price: number | null
           recording_url: string | null
           scheduled_at: string
@@ -706,6 +714,8 @@ export type Database = {
           id?: string
           is_paid?: boolean | null
           max_participants?: number | null
+          meeting_link?: string | null
+          payment_qr_code_url?: string | null
           price?: number | null
           recording_url?: string | null
           scheduled_at: string
@@ -720,6 +730,8 @@ export type Database = {
           id?: string
           is_paid?: boolean | null
           max_participants?: number | null
+          meeting_link?: string | null
+          payment_qr_code_url?: string | null
           price?: number | null
           recording_url?: string | null
           scheduled_at?: string
