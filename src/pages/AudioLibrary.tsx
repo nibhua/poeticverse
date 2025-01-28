@@ -5,13 +5,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AudioLibrary() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
-  const user = supabase.auth.getUser();
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
 
   const { data: audioPoems, isLoading } = useQuery({
     queryKey: ["audioPoems", searchTerm],
@@ -44,7 +52,6 @@ export default function AudioLibrary() {
     },
   });
 
-  const currentUserId = supabase.auth.getUser()?.data?.user?.id;
   const explorePoems = audioPoems?.filter(poem => poem.user_id !== currentUserId) || [];
   const myPoems = audioPoems?.filter(poem => poem.user_id === currentUserId) || [];
 
