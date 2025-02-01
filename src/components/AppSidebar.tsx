@@ -34,22 +34,24 @@ export function AppSidebar() {
         
         if (error) {
           console.error("Session error:", error);
-          throw error;
-        }
-
-        setIsAuthenticated(!!session);
-        
-        if (!session) {
-          if (!['/login', '/signup'].includes(location.pathname)) {
-            console.log("No session found, redirecting to login");
-            navigate('/login');
-          }
+          setIsAuthenticated(false);
           setIsLoading(false);
           return;
         }
 
-        if (session?.user?.id) {
-          console.log("Fetching profile for user:", session.user.id);
+        if (!session) {
+          console.log("No session found");
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          if (!['/login', '/signup'].includes(location.pathname)) {
+            navigate('/login');
+          }
+          return;
+        }
+
+        setIsAuthenticated(true);
+
+        if (session.user?.id) {
           try {
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
@@ -64,15 +66,14 @@ export function AppSidebar() {
               console.log("Found profile:", profile);
               setUsername(profile.username);
             }
-          } catch (fetchError) {
-            console.error("Profile fetch error:", fetchError);
+          } catch (error) {
+            console.error("Profile fetch error:", error);
             toast.error("Error loading profile data");
           }
         }
       } catch (error) {
         console.error("Auth error:", error);
-        toast.error("Authentication error occurred");
-        navigate('/login');
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
