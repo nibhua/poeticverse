@@ -1,4 +1,4 @@
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   Menu,
   Home,
@@ -17,49 +17,99 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toggleSidebar, state } = useSidebar();
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      
-      if (session?.user?.id) {
-        console.log("Fetching profile for user:", session.user.id);
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", session.user.id)
-          .single();
-
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
-          console.error("Error fetching profile:", error);
-        } else if (profile) {
-          console.log("Found profile:", profile);
-          setUsername(profile.username);
+          console.error("Session error:", error);
+          throw error;
         }
+
+        setIsAuthenticated(!!session);
+        
+        if (!session) {
+          if (!['/login', '/signup'].includes(location.pathname)) {
+            console.log("No session found, redirecting to login");
+            navigate('/login');
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        if (session?.user?.id) {
+          console.log("Fetching profile for user:", session.user.id);
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            toast.error("Error loading profile");
+          } else if (profile) {
+            console.log("Found profile:", profile);
+            setUsername(profile.username);
+          }
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
+        toast.error("Authentication error occurred");
+        navigate('/login');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchUserProfile();
+    checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", session);
-      setIsAuthenticated(!!session);
-      if (session?.user?.id) {
-        fetchUserProfile();
-      } else {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session);
+      
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setIsAuthenticated(false);
         setUsername(null);
+        navigate('/login');
+        return;
+      }
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(true);
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (profile) {
+            setUsername(profile.username);
+          }
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, location.pathname]);
+
+  // Show loading state
+  if (isLoading) {
+    return null;
+  }
 
   // Don't render the sidebar on login/signup pages or when not authenticated
   if (!isAuthenticated && (location.pathname === '/login' || location.pathname === '/signup')) {
