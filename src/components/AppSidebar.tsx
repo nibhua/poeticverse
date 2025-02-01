@@ -50,18 +50,23 @@ export function AppSidebar() {
 
         if (session?.user?.id) {
           console.log("Fetching profile for user:", session.user.id);
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("username")
-            .eq("id", session.user.id)
-            .single();
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("username")
+              .eq("id", session.user.id)
+              .single();
 
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            toast.error("Error loading profile");
-          } else if (profile) {
-            console.log("Found profile:", profile);
-            setUsername(profile.username);
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              toast.error("Error loading profile");
+            } else if (profile) {
+              console.log("Found profile:", profile);
+              setUsername(profile.username);
+            }
+          } catch (fetchError) {
+            console.error("Profile fetch error:", fetchError);
+            toast.error("Error loading profile data");
           }
         }
       } catch (error) {
@@ -88,14 +93,22 @@ export function AppSidebar() {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(true);
         if (session?.user?.id) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("username")
-            .eq("id", session.user.id)
-            .single();
-          
-          if (profile) {
-            setUsername(profile.username);
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("username")
+              .eq("id", session.user.id)
+              .single();
+            
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              toast.error("Error loading profile");
+            } else if (profile) {
+              setUsername(profile.username);
+            }
+          } catch (error) {
+            console.error("Profile fetch error:", error);
+            toast.error("Error loading profile data");
           }
         }
       }
