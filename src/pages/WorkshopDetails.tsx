@@ -197,6 +197,8 @@ export default function WorkshopDetails() {
           <p>Duration: {workshop.duration} minutes</p>
           {workshop.is_paid && <p>Price: ${workshop.price}</p>}
           <p>Maximum Participants: {workshop.max_participants}</p>
+          
+          {/* Host Controls */}
           {isHost && (
             <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
               <DialogTrigger asChild>
@@ -219,6 +221,8 @@ export default function WorkshopDetails() {
               </DialogContent>
             </Dialog>
           )}
+
+          {/* Participant View - Meeting Link */}
           {isApproved && workshop.meeting_link && (
             <div>
               <p>Meeting Link:</p>
@@ -234,6 +238,7 @@ export default function WorkshopDetails() {
           )}
         </div>
 
+        {/* Registration Section - Only show for participants */}
         {!isHost && !isRegistered && (
           <div className="space-y-4">
             <div>
@@ -258,11 +263,12 @@ export default function WorkshopDetails() {
               onClick={() => registerMutation.mutate()}
               disabled={!paymentScreenshot}
             >
-              Register for Workshop
+              Send Registration Request
             </Button>
           </div>
         )}
 
+        {/* Host View - Registration Requests */}
         {isHost && registrations && (
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Registration Requests</h2>
