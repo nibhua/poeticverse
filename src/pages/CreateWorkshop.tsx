@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { uploadImage } from "@/utils/imageUpload";
 
 export default function CreateWorkshop() {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ export default function CreateWorkshop() {
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
+  const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
+  const [meetingLink, setMeetingLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,6 +30,12 @@ export default function CreateWorkshop() {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Not authenticated");
 
+      let qrCodeUrl = null;
+      if (qrCodeFile && isPaid) {
+        qrCodeUrl = await uploadImage(qrCodeFile, "workshop-payments", `qr-codes/${Date.now()}`);
+        if (!qrCodeUrl) throw new Error("Failed to upload QR code");
+      }
+
       const { error } = await supabase.from("workshops").insert({
         host_id: user.id,
         title,
@@ -36,6 +45,8 @@ export default function CreateWorkshop() {
         is_paid: isPaid,
         price: isPaid ? parseFloat(price) : null,
         max_participants: parseInt(maxParticipants),
+        payment_qr_code_url: qrCodeUrl,
+        meeting_link: meetingLink,
       });
 
       if (error) throw error;
@@ -46,6 +57,7 @@ export default function CreateWorkshop() {
       });
       navigate("/workshops");
     } catch (error) {
+      console.error("Create workshop error:", error);
       toast({
         title: "Error",
         description: "Failed to create workshop",
@@ -86,26 +98,41 @@ export default function CreateWorkshop() {
           required
         />
         <div className="flex items-center space-x-2">
-          <Switch
-            checked={isPaid}
-            onCheckedChange={setIsPaid}
-          />
+          <Switch checked={isPaid} onCheckedChange={setIsPaid} />
           <span>Paid Workshop</span>
         </div>
         {isPaid && (
-          <Input
-            type="number"
-            placeholder="Price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-          />
+          <>
+            <Input
+              type="number"
+              placeholder="Price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Payment QR Code</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setQrCodeFile(e.target.files?.[0] || null)}
+                required={isPaid}
+              />
+            </div>
+          </>
         )}
         <Input
           type="number"
           placeholder="Maximum Participants"
           value={maxParticipants}
           onChange={(e) => setMaxParticipants(e.target.value)}
+          required
+        />
+        <Input
+          type="url"
+          placeholder="Meeting Link"
+          value={meetingLink}
+          onChange={(e) => setMeetingLink(e.target.value)}
           required
         />
         <Button type="submit" disabled={isLoading}>
