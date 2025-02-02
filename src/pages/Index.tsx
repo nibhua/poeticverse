@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { Post } from "@/components/Post";
 import { TemporaryPostsSection } from "@/components/temporary-posts/TemporaryPostsSection";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
+  // Check auth status once on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -22,9 +22,8 @@ const Index = () => {
         setUserId(session.user.id);
       } catch (error) {
         console.error("Auth error:", error);
+        toast.error("Authentication error. Please try logging in again.");
         navigate('/login');
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -43,22 +42,28 @@ const Index = () => {
     };
   }, [navigate]);
 
-  // Fetch posts from followed users with like counts and profile information
+  // Fetch posts from followed users
   const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
     queryKey: ['followed-posts', userId],
-    enabled: !!userId && !isLoading,
     queryFn: async () => {
-      console.log("Fetching posts from followed users");
-      const { data: followedUsers } = await supabase
+      console.log("Fetching posts from followed users for userId:", userId);
+      if (!userId) return [];
+
+      const { data: followedUsers, error: followError } = await supabase
         .from('followers')
         .select('followed_id')
         .eq('follower_id', userId);
+
+      if (followError) {
+        console.error("Error fetching followed users:", followError);
+        return [];
+      }
 
       if (!followedUsers?.length) return [];
 
       const followedIds = followedUsers.map(f => f.followed_id);
       
-      const { data: posts, error } = await supabase
+      const { data: posts, error: postsError } = await supabase
         .from('posts')
         .select(`
           *,
@@ -72,9 +77,9 @@ const Index = () => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error("Error fetching followed posts:", error);
-        throw error;
+      if (postsError) {
+        console.error("Error fetching followed posts:", postsError);
+        return [];
       }
 
       return posts.map(post => ({
@@ -82,16 +87,18 @@ const Index = () => {
         likes: post.likes[0]?.count || 0
       }));
     },
-    staleTime: 30000, // Cache data for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    enabled: !!userId,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Fetch random posts with like counts and profile information
+  // Fetch random posts
   const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
     queryKey: ['random-posts', userId],
-    enabled: !!userId && !isLoading,
     queryFn: async () => {
       console.log("Fetching random posts");
+      if (!userId) return [];
+
       const { data: posts, error } = await supabase
         .from('posts')
         .select(`
@@ -108,7 +115,7 @@ const Index = () => {
 
       if (error) {
         console.error("Error fetching random posts:", error);
-        throw error;
+        return [];
       }
 
       return posts.map(post => ({
@@ -116,11 +123,17 @@ const Index = () => {
         likes: post.likes[0]?.count || 0
       }));
     },
+    enabled: !!userId,
     staleTime: 30000,
     gcTime: 5 * 60 * 1000,
   });
 
-  if (isLoading || followedPostsLoading || randomPostsLoading) {
+  // Show loading state only when actively fetching data
+  if (!userId) {
+    return null; // Don't show loading state during initial auth check
+  }
+
+  if (followedPostsLoading && randomPostsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
