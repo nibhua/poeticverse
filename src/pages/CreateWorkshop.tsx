@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/utils/imageUpload";
 import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export default function CreateWorkshop() {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ export default function CreateWorkshop() {
         description: "Workshop created successfully",
       });
       navigate("/workshops");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Create workshop error:", error);
       toast({
         title: "Error",
@@ -110,6 +111,16 @@ export default function CreateWorkshop() {
 
   return (
     <div className="container max-w-2xl mx-auto py-8">
+      <div className="mb-6 flex items-center">
+        <Button 
+          variant="ghost" 
+          className="mr-4"
+          onClick={() => navigate("/workshops")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Workshops
+        </Button>
+      </div>
       <Card>
         <CardContent className="p-6">
           <h1 className="text-2xl font-bold mb-6">Create Workshop</h1>
