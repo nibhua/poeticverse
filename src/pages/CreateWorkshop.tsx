@@ -48,8 +48,10 @@ export default function CreateWorkshop() {
     setIsLoading(true);
 
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error("Auth error:", userError);
         toast({
           title: "Error",
           description: "Please log in to create a workshop",
@@ -101,7 +103,7 @@ export default function CreateWorkshop() {
       console.error("Create workshop error:", error);
       toast({
         title: "Error",
-        description: "Failed to create workshop. Please try again.",
+        description: error.message || "Failed to create workshop. Please try again.",
         variant: "destructive",
       });
     } finally {
