@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/utils/imageUpload";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function CreateWorkshop() {
   const navigate = useNavigate();
@@ -24,19 +25,52 @@ export default function CreateWorkshop() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isPaid && !qrCodeFile) {
+      toast({
+        title: "Error",
+        description: "Please upload a payment QR code for paid workshops",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!meetingLink) {
+      toast({
+        title: "Error",
+        description: "Please provide a meeting link",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please log in to create a workshop",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      console.log("Creating workshop for user:", user.id);
 
       let qrCodeUrl = null;
       if (qrCodeFile && isPaid) {
+        console.log("Uploading QR code...");
         qrCodeUrl = await uploadImage(qrCodeFile, "workshop-payments", `qr-codes/${Date.now()}`);
-        if (!qrCodeUrl) throw new Error("Failed to upload QR code");
+        if (!qrCodeUrl) {
+          throw new Error("Failed to upload QR code");
+        }
+        console.log("QR code uploaded successfully:", qrCodeUrl);
       }
 
-      const { error } = await supabase.from("workshops").insert({
+      const { error: workshopError } = await supabase.from("workshops").insert({
         host_id: user.id,
         title,
         description,
@@ -47,10 +81,16 @@ export default function CreateWorkshop() {
         max_participants: parseInt(maxParticipants),
         payment_qr_code_url: qrCodeUrl,
         meeting_link: meetingLink,
+        status: 'scheduled',
       });
 
-      if (error) throw error;
+      if (workshopError) {
+        console.error("Workshop creation error:", workshopError);
+        throw workshopError;
+      }
 
+      console.log("Workshop created successfully");
+      
       toast({
         title: "Success",
         description: "Workshop created successfully",
@@ -60,7 +100,7 @@ export default function CreateWorkshop() {
       console.error("Create workshop error:", error);
       toast({
         title: "Error",
-        description: "Failed to create workshop",
+        description: "Failed to create workshop. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -69,76 +109,120 @@ export default function CreateWorkshop() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Create Workshop</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <Textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-        <Input
-          type="datetime-local"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
-        <Input
-          type="number"
-          placeholder="Duration (minutes)"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-          required
-        />
-        <div className="flex items-center space-x-2">
-          <Switch checked={isPaid} onCheckedChange={setIsPaid} />
-          <span>Paid Workshop</span>
-        </div>
-        {isPaid && (
-          <>
-            <Input
-              type="number"
-              placeholder="Price"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              required
-            />
+    <div className="container max-w-2xl mx-auto py-8">
+      <Card>
+        <CardContent className="p-6">
+          <h1 className="text-2xl font-bold mb-6">Create Workshop</h1>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Payment QR Code</label>
+              <label className="text-sm font-medium">Title</label>
               <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setQrCodeFile(e.target.files?.[0] || null)}
-                required={isPaid}
+                placeholder="Workshop Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
               />
             </div>
-          </>
-        )}
-        <Input
-          type="number"
-          placeholder="Maximum Participants"
-          value={maxParticipants}
-          onChange={(e) => setMaxParticipants(e.target.value)}
-          required
-        />
-        <Input
-          type="url"
-          placeholder="Meeting Link"
-          value={meetingLink}
-          onChange={(e) => setMeetingLink(e.target.value)}
-          required
-        />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : "Create Workshop"}
-        </Button>
-      </form>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                placeholder="Workshop Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date and Time</label>
+              <Input
+                type="datetime-local"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Duration (minutes)</label>
+              <Input
+                type="number"
+                placeholder="Duration in minutes"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                required
+                min="1"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch checked={isPaid} onCheckedChange={setIsPaid} />
+              <span className="text-sm font-medium">Paid Workshop</span>
+            </div>
+
+            {isPaid && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Price</label>
+                  <Input
+                    type="number"
+                    placeholder="Workshop Price"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Payment QR Code</label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setQrCodeFile(e.target.files?.[0] || null)}
+                    required={isPaid}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Upload a QR code for payment (required for paid workshops)
+                  </p>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Maximum Participants</label>
+              <Input
+                type="number"
+                placeholder="Maximum number of participants"
+                value={maxParticipants}
+                onChange={(e) => setMaxParticipants(e.target.value)}
+                required
+                min="1"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Meeting Link</label>
+              <Input
+                type="url"
+                placeholder="Meeting Link (Zoom, Google Meet, etc.)"
+                value={meetingLink}
+                onChange={(e) => setMeetingLink(e.target.value)}
+                required
+              />
+              <p className="text-sm text-muted-foreground">
+                This will only be visible to approved participants
+              </p>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating..." : "Create Workshop"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
