@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 interface WorkshopFormProps {
   onSubmit: (formData: {
@@ -33,6 +34,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // Prevent multiple submissions
     onSubmit({
       title,
       description,
@@ -57,6 +59,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -67,6 +70,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -77,6 +81,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -89,11 +94,16 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
               onChange={(e) => setDuration(e.target.value)}
               required
               min="1"
+              disabled={isLoading}
             />
           </div>
 
           <div className="flex items-center space-x-2">
-            <Switch checked={isPaid} onCheckedChange={setIsPaid} />
+            <Switch 
+              checked={isPaid} 
+              onCheckedChange={setIsPaid}
+              disabled={isLoading}
+            />
             <span className="text-sm font-medium">Paid Workshop</span>
           </div>
 
@@ -109,6 +119,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
                   required
                   min="0"
                   step="0.01"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -119,6 +130,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
                   accept="image/*"
                   onChange={(e) => setQrCodeFile(e.target.files?.[0] || null)}
                   required={isPaid}
+                  disabled={isLoading}
                 />
                 <p className="text-sm text-muted-foreground">
                   Upload a QR code for payment (required for paid workshops)
@@ -136,6 +148,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
               onChange={(e) => setMaxParticipants(e.target.value)}
               required
               min="1"
+              disabled={isLoading}
             />
           </div>
 
@@ -147,6 +160,7 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
               value={meetingLink}
               onChange={(e) => setMeetingLink(e.target.value)}
               required
+              disabled={isLoading}
             />
             <p className="text-sm text-muted-foreground">
               This will only be visible to approved participants
@@ -154,7 +168,14 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating..." : "Create Workshop"}
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating...
+              </span>
+            ) : (
+              "Create Workshop"
+            )}
           </Button>
         </form>
       </CardContent>

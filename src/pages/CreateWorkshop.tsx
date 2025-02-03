@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { uploadImage } from "@/utils/imageUpload";
 import { WorkshopForm } from "@/components/workshops/WorkshopForm";
 import { PageHeader } from "@/components/workshops/PageHeader";
 
 export default function CreateWorkshop() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (formData: {
@@ -22,18 +21,16 @@ export default function CreateWorkshop() {
     qrCodeFile: File | null;
     meetingLink: string;
   }) => {
+    if (isLoading) return; // Prevent multiple submissions
     setIsLoading(true);
+    console.log("Starting workshop creation...");
 
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
         console.error("Auth error:", userError);
-        toast({
-          title: "Error",
-          description: "Please log in to create a workshop",
-          variant: "destructive",
-        });
+        toast.error("Please log in to create a workshop");
         navigate("/login");
         return;
       }
@@ -71,18 +68,11 @@ export default function CreateWorkshop() {
 
       console.log("Workshop created successfully");
       
-      toast({
-        title: "Success",
-        description: "Workshop created successfully",
-      });
+      toast.success("Workshop created successfully");
       navigate("/workshops");
     } catch (error: any) {
       console.error("Create workshop error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create workshop. Please try again.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create workshop. Please try again.");
     } finally {
       setIsLoading(false);
     }
