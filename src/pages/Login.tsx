@@ -6,42 +6,66 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // Check if user is already logged in
   useEffect(() => {
+    let isMounted = true;
+    let retryTimeout: NodeJS.Timeout;
+
     const checkSession = async () => {
       try {
+        console.log("Checking initial session state...");
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log("Checking session:", session);
         
         if (error) {
           console.error("Session check error:", error);
+          throw error;
+        }
+
+        if (session && isMounted) {
+          console.log("Active session found, redirecting to home");
+          navigate("/");
           return;
         }
 
-        if (session) {
-          console.log("User already logged in, redirecting to home");
-          navigate("/");
-        }
+        console.log("No active session found");
       } catch (error) {
         console.error("Session check failed:", error);
+        if (isMounted && retryCount < MAX_RETRIES) {
+          console.log(`Retrying session check... Attempt ${retryCount + 1} of ${MAX_RETRIES}`);
+          setRetryCount(prev => prev + 1);
+          retryTimeout = setTimeout(checkSession, RETRY_DELAY);
+        } else {
+          console.log("Max retries reached or critical error in session check");
+          toast.error("Failed to verify session. Please try again.");
+        }
       } finally {
-        setInitialCheckDone(true);
+        if (isMounted) {
+          setInitialCheckDone(true);
+        }
       }
     };
 
     checkSession();
-  }, [navigate]);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(retryTimeout);
+    };
+  }, [navigate, retryCount]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return; // Prevent multiple submissions
+    if (loading) return;
     
     setLoading(true);
     console.log("Attempting login for email:", email);
@@ -71,7 +95,12 @@ const Login = () => {
   if (!initialCheckDone) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm text-muted-foreground">
+            {retryCount > 0 ? `Checking session... (${retryCount}/${MAX_RETRIES})` : 'Loading...'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -83,6 +112,7 @@ const Login = () => {
           <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-gray-600">Please sign in to your account</p>
         </div>
+        
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div>

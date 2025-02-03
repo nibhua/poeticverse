@@ -11,6 +11,7 @@ import {
   Users,
   Trophy,
   ListChecks,
+  Loader2,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,9 @@ import { toast } from "sonner";
 import { SidebarMenu } from "./sidebar/SidebarMenu";
 import { SidebarOverlay } from "./sidebar/SidebarOverlay";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,32 +32,41 @@ export function AppSidebar() {
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    let retryTimeout: NodeJS.Timeout;
+
     const checkSession = async () => {
       try {
+        console.log("Checking session...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Session error:", error);
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
+          throw error;
         }
 
         if (!session) {
           console.log("No session found");
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          if (!['/login', '/signup'].includes(location.pathname)) {
-            navigate('/login');
+          if (isMounted) {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+            if (!['/login', '/signup'].includes(location.pathname)) {
+              navigate('/login');
+            }
           }
           return;
         }
 
-        setIsAuthenticated(true);
+        console.log("Session found:", session);
+        if (isMounted) {
+          setIsAuthenticated(true);
+        }
 
         if (session.user?.id) {
+          console.log("Fetching profile for user:", session.user.id);
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("username")
@@ -62,17 +75,32 @@ export function AppSidebar() {
 
           if (profileError) {
             console.error("Error fetching profile:", profileError);
-            toast.error("Error loading profile");
-          } else if (profile) {
-            console.log("Found profile:", profile);
+            throw profileError;
+          }
+
+          if (profile && isMounted) {
+            console.log("Profile found:", profile);
             setUsername(profile.username);
           }
         }
       } catch (error) {
-        console.error("Auth error:", error);
-        setIsAuthenticated(false);
+        console.error("Auth check error:", error);
+        if (isMounted && retryCount < MAX_RETRIES) {
+          console.log(`Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`);
+          setRetryCount(prev => prev + 1);
+          retryTimeout = setTimeout(checkSession, RETRY_DELAY);
+        } else if (isMounted) {
+          console.log("Max retries reached or critical error");
+          setIsAuthenticated(false);
+          toast.error("Failed to verify authentication. Please try logging in again.");
+          if (!['/login', '/signup'].includes(location.pathname)) {
+            navigate('/login');
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -108,12 +136,23 @@ export function AppSidebar() {
     });
 
     return () => {
+      isMounted = false;
+      clearTimeout(retryTimeout);
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, retryCount]);
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background/50">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm text-muted-foreground">
+            {retryCount > 0 ? `Retrying... (${retryCount}/${MAX_RETRIES})` : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated && (location.pathname === '/login' || location.pathname === '/signup')) {
