@@ -21,32 +21,44 @@ export default function CreateWorkshop() {
     qrCodeFile: File | null;
     meetingLink: string;
   }) => {
-    if (isLoading) return; // Prevent multiple submissions
+    if (isLoading) {
+      console.log("Already submitting, preventing double submission");
+      return;
+    }
+
     setIsLoading(true);
-    console.log("Starting workshop creation...");
+    console.log("Starting workshop creation process...");
 
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
-        console.error("Auth error:", userError);
+        console.error("Authentication error:", userError);
         toast.error("Please log in to create a workshop");
         navigate("/login");
         return;
       }
 
-      console.log("Creating workshop for user:", user.id);
+      console.log("Authenticated user:", user.id);
 
       let qrCodeUrl = null;
       if (formData.qrCodeFile && formData.isPaid) {
         console.log("Uploading QR code...");
-        qrCodeUrl = await uploadImage(formData.qrCodeFile, "workshop-payments", `qr-codes/${Date.now()}`);
-        if (!qrCodeUrl) {
-          throw new Error("Failed to upload QR code");
+        try {
+          qrCodeUrl = await uploadImage(formData.qrCodeFile, "workshop-payments", `qr-codes/${Date.now()}`);
+          if (!qrCodeUrl) {
+            throw new Error("Failed to upload QR code");
+          }
+          console.log("QR code uploaded successfully:", qrCodeUrl);
+        } catch (uploadError) {
+          console.error("QR code upload error:", uploadError);
+          toast.error("Failed to upload QR code. Please try again.");
+          setIsLoading(false);
+          return;
         }
-        console.log("QR code uploaded successfully:", qrCodeUrl);
       }
 
+      console.log("Creating workshop record...");
       const { error: workshopError } = await supabase.from("workshops").insert({
         host_id: user.id,
         title: formData.title,
@@ -67,7 +79,6 @@ export default function CreateWorkshop() {
       }
 
       console.log("Workshop created successfully");
-      
       toast.success("Workshop created successfully");
       navigate("/workshops");
     } catch (error: any) {

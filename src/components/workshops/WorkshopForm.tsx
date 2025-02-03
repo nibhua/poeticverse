@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface WorkshopFormProps {
   onSubmit: (formData: {
@@ -32,9 +33,57 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
   const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
   const [meetingLink, setMeetingLink] = useState("");
 
+  const validateForm = () => {
+    if (!title.trim()) {
+      toast.error("Please enter a workshop title");
+      return false;
+    }
+    if (!description.trim()) {
+      toast.error("Please enter a workshop description");
+      return false;
+    }
+    if (!date) {
+      toast.error("Please select a date and time");
+      return false;
+    }
+    if (!duration || parseInt(duration) <= 0) {
+      toast.error("Please enter a valid duration");
+      return false;
+    }
+    if (isPaid) {
+      if (!price || parseFloat(price) <= 0) {
+        toast.error("Please enter a valid price");
+        return false;
+      }
+      if (!qrCodeFile) {
+        toast.error("Please upload a payment QR code");
+        return false;
+      }
+    }
+    if (!maxParticipants || parseInt(maxParticipants) <= 0) {
+      toast.error("Please enter a valid number of maximum participants");
+      return false;
+    }
+    if (!meetingLink.trim()) {
+      toast.error("Please enter a meeting link");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return; // Prevent multiple submissions
+    if (isLoading) {
+      console.log("Form submission prevented - already loading");
+      return;
+    }
+
+    console.log("Validating form data...");
+    if (!validateForm()) {
+      return;
+    }
+
+    console.log("Form validation passed, submitting...");
     onSubmit({
       title,
       description,
@@ -167,11 +216,15 @@ export function WorkshopForm({ onSubmit, isLoading }: WorkshopFormProps) {
             </p>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+          >
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Creating...
+                Creating Workshop...
               </span>
             ) : (
               "Create Workshop"

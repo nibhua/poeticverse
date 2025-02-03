@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/utils/imageUpload";
+import { Loader2 } from "lucide-react";
 
 export default function WorkshopDetails() {
   const { id } = useParams();
@@ -13,35 +14,49 @@ export default function WorkshopDetails() {
   const queryClient = useQueryClient();
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
 
-  // Fetch workshop details
-  const { data: workshop, isLoading: isLoadingWorkshop } = useQuery({
+  // Fetch workshop details with better error handling
+  const { data: workshop, isLoading: isLoadingWorkshop, error: workshopError } = useQuery({
     queryKey: ["workshop", id],
     queryFn: async () => {
+      console.log("Fetching workshop details...");
       const { data, error } = await supabase
         .from("workshops")
         .select("*, host:profiles!workshops_host_id_fkey(*)")
         .eq("id", id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching workshop:", error);
+        throw error;
+      }
+      console.log("Workshop details fetched:", data);
       return data;
     },
+    retry: 1,
   });
 
-  // Fetch current user
-  const { data: user } = useQuery({
+  // Fetch current user with better error handling
+  const { data: user, isLoading: isLoadingUser } = useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Fetching current user...");
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("Error fetching user:", error);
+        throw error;
+      }
+      console.log("Current user fetched:", user);
       return user;
     },
+    retry: 1,
   });
 
-  // Fetch registration status
-  const { data: registration } = useQuery({
+  // Fetch registration status with better error handling
+  const { data: registration, isLoading: isLoadingRegistration } = useQuery({
     queryKey: ["registration", id],
     queryFn: async () => {
       if (!user) return null;
+      console.log("Fetching registration status...");
       const { data, error } = await supabase
         .from("workshop_registrations")
         .select("*")
@@ -49,39 +64,58 @@ export default function WorkshopDetails() {
         .eq("user_id", user.id)
         .single();
       
-      if (error && error.code !== "PGRST116") throw error;
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching registration:", error);
+        throw error;
+      }
+      console.log("Registration status fetched:", data);
       return data;
     },
+    enabled: !!user,
+    retry: 1,
   });
 
-  // Fetch all registrations (for workshop host)
-  const { data: registrations } = useQuery({
+  // Fetch all registrations with better error handling
+  const { data: registrations, isLoading: isLoadingRegistrations } = useQuery({
     queryKey: ["registrations", id],
     queryFn: async () => {
       if (!user || user.id !== workshop?.host_id) return null;
+      console.log("Fetching all registrations...");
       const { data, error } = await supabase
         .from("workshop_registrations")
         .select("*, user:profiles!workshop_registrations_user_id_fkey(*)")
         .eq("workshop_id", id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching registrations:", error);
+        throw error;
+      }
+      console.log("All registrations fetched:", data);
       return data;
     },
     enabled: !!workshop && !!user && user.id === workshop.host_id,
+    retry: 1,
   });
 
-  // Register for workshop mutation
+  // Register for workshop mutation with better error handling
   const registerMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !paymentScreenshot) throw new Error("Missing required data");
+      if (!user || !paymentScreenshot) {
+        throw new Error("Missing required data");
+      }
 
+      console.log("Starting registration process...");
       const screenshotUrl = await uploadImage(
         paymentScreenshot,
         "workshop-payments",
         `screenshots/${Date.now()}`
       );
 
-      if (!screenshotUrl) throw new Error("Failed to upload payment screenshot");
+      if (!screenshotUrl) {
+        throw new Error("Failed to upload payment screenshot");
+      }
+
+      console.log("Payment screenshot uploaded:", screenshotUrl);
 
       const { error } = await supabase
         .from("workshop_registrations")
@@ -93,7 +127,11 @@ export default function WorkshopDetails() {
           payment_status: workshop?.is_paid ? "pending" : "not_required"
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Registration error:", error);
+        throw error;
+      }
+      console.log("Registration completed successfully");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["registration", id] });
@@ -103,17 +141,16 @@ export default function WorkshopDetails() {
       });
       setPaymentScreenshot(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Registration error:", error);
       toast({
         title: "Error",
-        description: "Failed to register for workshop",
+        description: error.message || "Failed to register for workshop",
         variant: "destructive",
       });
     },
   });
 
-  // Approve registration mutation
   const approveRegistrationMutation = useMutation({
     mutationFn: async (registrationId: string) => {
       const { error } = await supabase
@@ -173,12 +210,20 @@ export default function WorkshopDetails() {
     },
   });
 
-  if (isLoadingWorkshop) {
-    return <div>Loading...</div>;
+  if (workshopError) {
+    return <div className="text-center text-red-500">Error loading workshop details</div>;
+  }
+
+  if (isLoadingWorkshop || isLoadingUser) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!workshop) {
-    return <div>Workshop not found</div>;
+    return <div className="text-center">Workshop not found</div>;
   }
 
   const isHost = user?.id === workshop.host_id;
@@ -317,4 +362,5 @@ export default function WorkshopDetails() {
       </div>
     </div>
   );
+
 }
