@@ -11,12 +11,17 @@ export default function Index() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate('/login');
+          return;
+        }
+        setUserId(session.user.id);
+      } catch (error) {
+        console.error("Session check error:", error);
         navigate('/login');
-        return;
       }
-      setUserId(session.user.id);
     };
 
     checkSession();
