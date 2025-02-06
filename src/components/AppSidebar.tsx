@@ -12,6 +12,7 @@ import {
   Trophy,
   ListChecks,
   Loader2,
+  X,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -21,9 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarMenu } from "./sidebar/SidebarMenu";
 import { SidebarOverlay } from "./sidebar/SidebarOverlay";
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -33,6 +32,7 @@ export function AppSidebar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let isMounted = true;
@@ -85,10 +85,10 @@ export function AppSidebar() {
         }
       } catch (error) {
         console.error("Auth check error:", error);
-        if (isMounted && retryCount < MAX_RETRIES) {
-          console.log(`Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`);
+        if (isMounted && retryCount < 3) {
+          console.log(`Retrying... Attempt ${retryCount + 1} of 3`);
           setRetryCount(prev => prev + 1);
-          retryTimeout = setTimeout(checkSession, RETRY_DELAY);
+          retryTimeout = setTimeout(checkSession, 1000);
         } else if (isMounted) {
           console.log("Max retries reached or critical error");
           setIsAuthenticated(false);
@@ -135,12 +135,22 @@ export function AppSidebar() {
       }
     });
 
+    // Close sidebar on mobile when route changes
+    const handleRouteChange = () => {
+      if (isMobile) {
+        toggleSidebar();
+      }
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+
     return () => {
       isMounted = false;
       clearTimeout(retryTimeout);
       subscription.unsubscribe();
+      window.removeEventListener('popstate', handleRouteChange);
     };
-  }, [navigate, location.pathname, retryCount]);
+  }, [navigate, location.pathname, retryCount, isMobile, toggleSidebar]);
 
   if (isLoading) {
     return (
@@ -148,7 +158,7 @@ export function AppSidebar() {
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin" />
           <p className="text-sm text-muted-foreground">
-            {retryCount > 0 ? `Retrying... (${retryCount}/${MAX_RETRIES})` : 'Loading...'}
+            {retryCount > 0 ? `Retrying... (${retryCount}/3)` : 'Loading...'}
           </p>
         </div>
       </div>
@@ -178,10 +188,14 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          className="fixed top-4 left-4 z-50 bg-background md:block"
+          className="fixed top-4 left-4 z-50 bg-background md:hidden"
           onClick={toggleSidebar}
         >
-          <Menu className="h-5 w-5" />
+          {state === "collapsed" ? (
+            <Menu className="h-5 w-5" />
+          ) : (
+            <X className="h-5 w-5" />
+          )}
         </Button>
       )}
 
@@ -189,7 +203,8 @@ export function AppSidebar() {
         <nav 
           className={cn(
             "fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out z-40",
-            state === "collapsed" ? "-translate-x-full" : "translate-x-0"
+            state === "collapsed" ? "-translate-x-full" : "translate-x-0",
+            "md:translate-x-0 md:relative md:w-64"
           )}
         >
           <div className="h-full flex flex-col">
@@ -201,7 +216,7 @@ export function AppSidebar() {
 
       {isAuthenticated && (
         <SidebarOverlay 
-          isOpen={state !== "collapsed"} 
+          isOpen={state !== "collapsed" && isMobile} 
           onClose={toggleSidebar}
         />
       )}
