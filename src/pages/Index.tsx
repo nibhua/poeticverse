@@ -10,12 +10,16 @@ export default function Index() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/login');
-      return;
-    }
-    setUserId(session.user.id);
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+        return;
+      }
+      setUserId(session.user.id);
+    };
+
+    checkSession();
   }, [navigate]);
 
   const { data: followedPosts = [] } = useQuery({
@@ -76,7 +80,17 @@ export default function Index() {
     <div className="space-y-4 pb-20">
       {allPosts.length > 0 ? (
         allPosts.map((post) => (
-          <Post key={post.id} post={post} />
+          <Post 
+            key={post.id}
+            postId={post.id}
+            username={post.profiles.username}
+            content={post.content_text || ""}
+            timestamp={post.created_at}
+            likes={0}
+            comments={0}
+            imageUrl={post.image_url}
+            profilePicUrl={post.profiles.profile_pic_url}
+          />
         ))
       ) : (
         <div className="text-center py-8 text-gray-500">
