@@ -11,7 +11,6 @@ import {
   Users,
   Trophy,
   ListChecks,
-  Loader2,
   X,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -30,61 +29,24 @@ export function AppSidebar() {
   const { toggleSidebar, state } = useSidebar();
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     let isMounted = true;
-    let retryTimeout: NodeJS.Timeout;
 
     const checkSession = async () => {
       try {
-        console.log("Checking session...");
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("Session error:", error);
-          throw error;
-        }
-
         if (!session) {
           console.log("No session found");
           if (isMounted) {
             setIsAuthenticated(false);
-            setIsLoading(false);
             if (!['/login', '/signup'].includes(location.pathname)) {
               navigate('/login');
             }
           }
           return;
-        }
-
-        // Check if token is about to expire (within 5 minutes)
-        const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
-        const isExpiringSoon = expiresAt - Date.now() < 5 * 60 * 1000;
-
-        if (isExpiringSoon) {
-          console.log("Session expiring soon, refreshing...");
-          const { data: { session: refreshedSession }, error: refreshError } = 
-            await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error("Session refresh error:", refreshError);
-            throw refreshError;
-          }
-
-          if (!refreshedSession) {
-            console.log("Failed to refresh session");
-            if (isMounted) {
-              setIsAuthenticated(false);
-              setIsLoading(false);
-              if (!['/login', '/signup'].includes(location.pathname)) {
-                navigate('/login');
-              }
-            }
-            return;
-          }
         }
 
         console.log("Session found:", session);
@@ -93,17 +55,11 @@ export function AppSidebar() {
         }
 
         if (session.user?.id) {
-          console.log("Fetching profile for user:", session.user.id);
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile } = await supabase
             .from("profiles")
             .select("username")
             .eq("id", session.user.id)
             .single();
-
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            throw profileError;
-          }
 
           if (profile && isMounted) {
             console.log("Profile found:", profile);
@@ -112,21 +68,11 @@ export function AppSidebar() {
         }
       } catch (error) {
         console.error("Auth check error:", error);
-        if (isMounted && retryCount < 3) {
-          console.log(`Retrying... Attempt ${retryCount + 1} of 3`);
-          setRetryCount(prev => prev + 1);
-          retryTimeout = setTimeout(checkSession, 1000);
-        } else if (isMounted) {
-          console.log("Max retries reached or critical error");
+        if (isMounted) {
           setIsAuthenticated(false);
-          toast.error("Failed to verify authentication. Please try logging in again.");
           if (!['/login', '/signup'].includes(location.pathname)) {
             navigate('/login');
           }
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
         }
       }
     };
@@ -136,7 +82,7 @@ export function AppSidebar() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
       
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
         setUsername(null);
         navigate('/login');
@@ -146,16 +92,13 @@ export function AppSidebar() {
       if (event === 'SIGNED_IN') {
         setIsAuthenticated(true);
         if (session?.user?.id) {
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile } = await supabase
             .from("profiles")
             .select("username")
             .eq("id", session.user.id)
             .single();
-          
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            toast.error("Error loading profile");
-          } else if (profile) {
+
+          if (profile) {
             setUsername(profile.username);
           }
         }
@@ -173,24 +116,10 @@ export function AppSidebar() {
 
     return () => {
       isMounted = false;
-      clearTimeout(retryTimeout);
       subscription.unsubscribe();
       window.removeEventListener('popstate', handleRouteChange);
     };
-  }, [navigate, location.pathname, retryCount, isMobile, toggleSidebar]);
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background/50">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-sm text-muted-foreground">
-            {retryCount > 0 ? `Retrying... (${retryCount}/3)` : 'Loading...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  }, [navigate, location.pathname, isMobile, toggleSidebar]);
 
   if (!isAuthenticated && (location.pathname === '/login' || location.pathname === '/signup')) {
     return null;
