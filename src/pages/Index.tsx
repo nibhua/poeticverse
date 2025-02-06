@@ -10,43 +10,24 @@ const Index = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Check auth status once on mount
+  // Simple auth check on mount
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          navigate('/login');
-          return;
-        }
-        setUserId(session.user.id);
-      } catch (error) {
-        console.error("Auth error:", error);
-        toast.error("Authentication error. Please try logging in again.");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         navigate('/login');
+        return;
       }
+      setUserId(session.user.id);
     };
 
     checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/login');
-      } else if (session) {
-        setUserId(session.user.id);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [navigate]);
 
   // Fetch posts from followed users
-  const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
+  const { data: followedPosts = [] } = useQuery({
     queryKey: ['followed-posts', userId],
     queryFn: async () => {
-      console.log("Fetching posts from followed users for userId:", userId);
       if (!userId) return [];
 
       const { data: followedUsers, error: followError } = await supabase
@@ -88,15 +69,12 @@ const Index = () => {
       }));
     },
     enabled: !!userId,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
   });
 
   // Fetch random posts
-  const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
+  const { data: randomPosts = [] } = useQuery({
     queryKey: ['random-posts', userId],
     queryFn: async () => {
-      console.log("Fetching random posts");
       if (!userId) return [];
 
       const { data: posts, error } = await supabase
@@ -124,22 +102,9 @@ const Index = () => {
       }));
     },
     enabled: !!userId,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
   });
 
-  // Show loading state only when actively fetching data
-  if (!userId) {
-    return null; // Don't show loading state during initial auth check
-  }
-
-  if (followedPostsLoading && randomPostsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
+  if (!userId) return null;
 
   const allPosts = [...(followedPosts || []), ...(randomPosts || [])];
 
