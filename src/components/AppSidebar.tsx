@@ -60,6 +60,33 @@ export function AppSidebar() {
           return;
         }
 
+        // Check if token is about to expire (within 5 minutes)
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+        const isExpiringSoon = expiresAt - Date.now() < 5 * 60 * 1000;
+
+        if (isExpiringSoon) {
+          console.log("Session expiring soon, refreshing...");
+          const { data: { session: refreshedSession }, error: refreshError } = 
+            await supabase.auth.refreshSession();
+          
+          if (refreshError) {
+            console.error("Session refresh error:", refreshError);
+            throw refreshError;
+          }
+
+          if (!refreshedSession) {
+            console.log("Failed to refresh session");
+            if (isMounted) {
+              setIsAuthenticated(false);
+              setIsLoading(false);
+              if (!['/login', '/signup'].includes(location.pathname)) {
+                navigate('/login');
+              }
+            }
+            return;
+          }
+        }
+
         console.log("Session found:", session);
         if (isMounted) {
           setIsAuthenticated(true);
@@ -109,14 +136,14 @@ export function AppSidebar() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
       
-      if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(false);
         setUsername(null);
         navigate('/login');
         return;
       }
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_IN') {
         setIsAuthenticated(true);
         if (session?.user?.id) {
           const { data: profile, error: profileError } = await supabase
