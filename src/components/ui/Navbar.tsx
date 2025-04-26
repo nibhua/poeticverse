@@ -47,9 +47,9 @@ export function Navbar() {
                     </motion.h1>
                 </Link>
                 
-                {/* Mobile menu button */}
+                {/* Mobile menu button - moved to the right side */}
                 <button 
-                    className="md:hidden z-20 p-2 rounded-md hover:bg-gray-100 transition-colors"
+                    className="md:hidden z-20 p-2 rounded-md hover:bg-gray-100 transition-colors ml-auto"
                     onClick={toggleMobileMenu}
                     aria-label="Toggle menu"
                 >
@@ -86,7 +86,7 @@ export function Navbar() {
                     ))}
                 </motion.nav>
 
-                {/* Mobile navigation */}
+                {/* Mobile navigation - overlay covers the whole screen */}
                 {isMobileMenuOpen && (
                     <motion.div
                         className="fixed inset-0 bg-white z-10 md:hidden"
@@ -101,7 +101,7 @@ export function Navbar() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
                             >
-                                {menuItems.map((item, index) => (
+                                {menuItems.map((item) => (
                                     <Link 
                                         key={item.path} 
                                         to={item.path}

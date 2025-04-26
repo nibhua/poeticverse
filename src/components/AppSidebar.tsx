@@ -1,3 +1,4 @@
+
 import { useLocation, Link } from "react-router-dom";
 import {
   Menu,
@@ -112,11 +113,11 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Fixed menu button moved lower */}
+      {/* Fixed menu button with proper positioning */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-15 left-4 z-50 bg-background md:block"
+        className="fixed top-16 left-4 z-40 bg-background shadow-sm"
         onClick={toggleSidebar}
       >
         <Menu className="h-5 w-5" />
@@ -124,13 +125,13 @@ export function AppSidebar() {
 
       <nav
         className={cn(
-          "fixed top-0 left-0 h-full bg-background border-r w-64 transform transition-transform duration-200 ease-in-out z-40",
+          "fixed top-12 left-0 h-[calc(100%-48px)] bg-background border-r w-64 transform transition-transform duration-200 ease-in-out z-30",
           state === "collapsed" ? "-translate-x-full" : "translate-x-0"
         )}
       >
         <div className="h-full flex flex-col">
-          {/* Increased spacer height so that menu items are pushed below the menu button */}
-          <div className="h-24" />
+          {/* Space for menu button */}
+          <div className="h-16" />
           <div className="flex-1 overflow-y-auto px-4 py-2">
             {menuItems.map((item) => (
               <Link
@@ -154,16 +155,16 @@ export function AppSidebar() {
       {/* Overlay when sidebar is open */}
       <div
         className={cn(
-          "fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-200",
+          "fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-200 z-20",
           state === "collapsed" ? "opacity-0 pointer-events-none" : "opacity-100 lg:opacity-0 lg:pointer-events-none"
         )}
         onClick={toggleSidebar}
       />
 
-      {/* Main content margin (unchanged from before) */}
+      {/* Main content margin (updated for better spacing) */}
       <div
         className={cn(
-          "min-h-screen transition-all duration-200 ease-in-out",
+          "min-h-screen transition-all duration-200 ease-in-out pt-12",
           state === "collapsed" ? "ml-0" : "ml-64"
         )}
       >

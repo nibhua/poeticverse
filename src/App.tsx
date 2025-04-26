@@ -1,5 +1,6 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -30,6 +31,7 @@ import CreateChallenge from "@/pages/CreateChallenge";
 import ChallengeDetails from "@/pages/ChallengeDetails";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Navbar } from "@/components/ui/Navbar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,18 +41,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// New Navbar component with a logo on the left
-function Navbar() {
-  return (
-    <header className="fixed top-0 left-0 right-0 bg-white border-b z-50 flex items-center px-4 py-2 shadow">
-      <Link to="/">
-        <img src="/logo2.png" alt="Poeticverse Logo" className="h-10" />
-      </Link>
-      {/* Additional navbar content can be added here */}
-    </header>
-  );
-}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -82,8 +72,7 @@ function App() {
           <div className="min-h-screen flex w-full bg-background">
             <BrowserRouter>
               <Navbar />
-              {/* Add a top margin (e.g., mt-16) to push content below the fixed navbar */}
-              <div className="flex w-full relative mt-16">
+              <div className="flex w-full relative">
                 {user && <AppSidebar />} {/* Sidebar only if logged in */}
                 <main className="flex-1 transition-all duration-200 ease-in-out relative z-0">
                   <div className="max-w-[600px] mx-auto px-6 py-8 w-full">

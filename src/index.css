@@ -35,7 +35,8 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    margin-top: 64px; /* Space for fixed navbar */
+    /* Reduced margin to remove the gap */
+    margin-top: 0;
   }
 
   h1, h2, h3, h4, h5, h6 {

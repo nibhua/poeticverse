@@ -87,7 +87,8 @@ export const deleteUserData = async (userId: string) => {
       .from('profiles')
       .delete()
       .eq('id', userId);
-
+      
+    // Return success
     return true;
   } catch (error) {
     console.error("Error in deleteUserData:", error);

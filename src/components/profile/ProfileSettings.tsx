@@ -50,14 +50,21 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
       if (!user) {
         console.error("No user found");
         toast.error("No user found");
+        setIsDeleting(false);
         return;
       }
 
       console.log("Starting account deletion process for user:", user.id);
       
       // First, delete all the user data from the database
-      await deleteUserData(user.id);
-      console.log("User data deleted successfully");
+      const success = await deleteUserData(user.id);
+      console.log("User data deleted successfully:", success);
+
+      if (!success) {
+        toast.error("Failed to delete user data. Please try again.");
+        setIsDeleting(false);
+        return;
+      }
 
       // Delete the auth user using the RPC function
       const { error: authDeleteError } = await supabase.rpc('delete_auth_user');
@@ -65,6 +72,7 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
       if (authDeleteError) {
         console.error("Error deleting auth user:", authDeleteError);
         toast.error("Failed to completely delete account. Please contact support.");
+        setIsDeleting(false);
         return;
       }
 
@@ -77,7 +85,6 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
     } catch (error) {
       console.error("Error deleting account:", error);
       toast.error("Failed to delete account");
-    } finally {
       setIsDeleting(false);
     }
   };
@@ -90,14 +97,14 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
             <Settings className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48">
-          <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuContent className="w-48 bg-white">
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => setShowDeleteDialog(true)} 
-            className="text-red-600"
+            className="text-red-600 cursor-pointer"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             <span>Delete Account</span>

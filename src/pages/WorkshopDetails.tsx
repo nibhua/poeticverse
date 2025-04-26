@@ -426,7 +426,7 @@ export default function WorkshopDetails() {
                             <div className="flex space-x-2 mt-4 md:mt-0">
                               <Button 
                                 onClick={() => updateStatusMutation.mutate(reg.id)}
-                                className="flex items-center"
+                                className="flex items-center bg-green-500 hover:bg-green-600"
                                 disabled={updateStatusMutation.isPending}
                               >
                                 <Check className="mr-1 h-4 w-4" />
