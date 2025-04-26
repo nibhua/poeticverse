@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Post } from "@/components/Post";
-import { toast } from "sonner";
+import { TemporaryPostsSection } from "@/components/temporary-posts/TemporaryPostsSection";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-export default function Index() {
+const Index = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -19,19 +21,34 @@ export default function Index() {
         }
         setUserId(session.user.id);
       } catch (error) {
-        console.error("Session check error:", error);
+        console.error("Auth error:", error);
         navigate('/login');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    checkSession();
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/login');
+      } else if (session) {
+        setUserId(session.user.id);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
-  const { data: followedPosts = [] } = useQuery({
+  // Fetch posts from followed users with like counts and profile information
+  const { data: followedPosts = [], isLoading: followedPostsLoading } = useQuery({
     queryKey: ['followed-posts', userId],
+    enabled: !!userId && !isLoading,
     queryFn: async () => {
-      if (!userId) return [];
-
+      console.log("Fetching posts from followed users");
       const { data: followedUsers } = await supabase
         .from('followers')
         .select('followed_id')
@@ -40,68 +57,108 @@ export default function Index() {
       if (!followedUsers?.length) return [];
 
       const followedIds = followedUsers.map(f => f.followed_id);
-
-      const { data: posts } = await supabase
+      
+      const { data: posts, error } = await supabase
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username, profile_pic_url)
+          profiles:user_id (
+            username,
+            profile_pic_url
+          ),
+          likes:likes (count)
         `)
         .in('user_id', followedIds)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      return posts || [];
+      if (error) {
+        console.error("Error fetching followed posts:", error);
+        throw error;
+      }
+
+      return posts.map(post => ({
+        ...post,
+        likes: post.likes[0]?.count || 0
+      }));
     },
-    enabled: !!userId,
+    staleTime: 30000, // Cache data for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
-  const { data: randomPosts = [] } = useQuery({
+  // Fetch random posts with like counts and profile information
+  const { data: randomPosts = [], isLoading: randomPostsLoading } = useQuery({
     queryKey: ['random-posts', userId],
+    enabled: !!userId && !isLoading,
     queryFn: async () => {
-      if (!userId) return [];
-
-      const { data: posts } = await supabase
+      console.log("Fetching random posts");
+      const { data: posts, error } = await supabase
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username, profile_pic_url)
+          profiles:user_id (
+            username,
+            profile_pic_url
+          ),
+          likes:likes (count)
         `)
-        .neq('user_id', userId)
+        .not('user_id', 'eq', userId)
         .order('created_at', { ascending: false })
         .limit(5);
 
-      return posts || [];
+      if (error) {
+        console.error("Error fetching random posts:", error);
+        throw error;
+      }
+
+      return posts.map(post => ({
+        ...post,
+        likes: post.likes[0]?.count || 0
+      }));
     },
-    enabled: !!userId,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  if (!userId) return null;
+  if (isLoading || followedPostsLoading || randomPostsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
-  const allPosts = [...followedPosts, ...randomPosts]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const allPosts = [...(followedPosts || []), ...(randomPosts || [])];
 
   return (
-    <div className="space-y-4 pb-20">
-      {allPosts.length > 0 ? (
-        allPosts.map((post) => (
-          <Post 
-            key={post.id}
-            postId={post.id}
-            username={post.profiles.username}
-            content={post.content_text || ""}
-            timestamp={post.created_at}
-            likes={0}
-            comments={0}
-            imageUrl={post.image_url}
-            profilePicUrl={post.profiles.profile_pic_url}
-          />
-        ))
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          No posts yet. Follow some users to see their posts here!
-        </div>
-      )}
+    <div>
+      <header className="sticky top-0 bg-white border-b p-4 z-10">
+        <h1 className="text-xl font-bold text-center">Home</h1>
+      </header>
+      <main className="max-w-lg mx-auto">
+        <TemporaryPostsSection />
+        {allPosts.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            No posts yet. Follow some users to see their posts here!
+          </div>
+        ) : (
+          allPosts.map((post) => (
+            <Post
+              key={post.id}
+              postId={post.id}
+              username={post.profiles.username}
+              content={post.content_text || post.caption || ""}
+              timestamp={new Date(post.created_at).toLocaleDateString()}
+              imageUrl={post.image_url}
+              likes={post.likes}
+              comments={0}
+              profilePicUrl={post.profiles.profile_pic_url}
+            />
+          ))
+        )}
+      </main>
     </div>
   );
-}
+};
+
+export default Index;

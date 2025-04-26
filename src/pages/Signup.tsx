@@ -10,7 +10,7 @@ import { UserRound, X } from "lucide-react";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -19,6 +19,11 @@ const Signup = () => {
   });
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
+  const [passwordValid, setPasswordValid] = useState({
+    length: false,
+    uppercase: false,
+    number: false,
+  });
 
   const handleProfilePicSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,9 +38,23 @@ const Signup = () => {
     setProfilePicPreview(null);
   };
 
+  const validatePassword = (password: string) => {
+    setPasswordValid({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+    });
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!passwordValid.length || !passwordValid.uppercase || !passwordValid.number) {
+      toast.error("Password must be at least 8 characters long, contain one uppercase letter, and one number.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const { error: signUpError, data } = await supabase.auth.signUp({
@@ -70,8 +89,12 @@ const Signup = () => {
 
       toast.success("Successfully signed up! Please check your email to verify your account.");
       navigate("/login");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -84,52 +107,18 @@ const Signup = () => {
           <h2 className="text-3xl font-bold text-gray-900">Create an account</h2>
           <p className="mt-2 text-gray-600">Join our community today</p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={profilePicPreview || undefined} />
-                <AvatarFallback>
-                  {formData.username ? formData.username[0].toUpperCase() : <UserRound />}
-                </AvatarFallback>
-              </Avatar>
-              {profilePicPreview && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute -top-2 -right-2 h-6 w-6"
-                  onClick={removeProfilePic}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-            <div>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePicSelect}
-                className="hidden"
-                id="profile-pic-upload"
-              />
-              <label htmlFor="profile-pic-upload">
-                <Button type="button" variant="outline" asChild>
-                  <span>Upload Profile Picture</span>
-                </Button>
-              </label>
-            </div>
-          </div>
 
+        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
           <div className="space-y-4">
             <Input
+              type="text"
               placeholder="Username"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required
             />
             <Input
+              type="text"
               placeholder="Full Name"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -146,17 +135,23 @@ const Signup = () => {
               type="password"
               placeholder="Password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, password: e.target.value });
+                validatePassword(e.target.value);
+              }}
               required
             />
+            <div className="text-sm text-gray-600">
+              <p className={passwordValid.length ? "text-green-600" : "text-red-600"}>• At least 8 characters</p>
+              <p className={passwordValid.uppercase ? "text-green-600" : "text-red-600"}>• At least one uppercase letter</p>
+              <p className={passwordValid.number ? "text-green-600" : "text-red-600"}>• At least one number</p>
+            </div>
           </div>
-
           <Button className="w-full" type="submit" disabled={loading}>
             {loading ? "Creating account..." : "Sign up"}
           </Button>
-
           <p className="text-center text-sm text-gray-600">
-            Already have an account?{" "}
+            Already have an account? {" "}
             <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
               Sign in
             </Link>
