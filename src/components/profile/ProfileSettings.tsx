@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { deleteUserData } from "@/utils/account/deleteUserData";
+import { deleteUserData } from "@/utils/accountDeletion";
 
 interface ProfileSettingsProps {
   userId: string;
@@ -59,7 +59,7 @@ export const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
       await deleteUserData(user.id);
       console.log("User data deleted successfully");
 
-      // Delete the auth user using the function
+      // Delete the auth user using the RPC function
       const { error: authDeleteError } = await supabase.rpc('delete_auth_user');
       
       if (authDeleteError) {

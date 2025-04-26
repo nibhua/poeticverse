@@ -139,10 +139,10 @@ export default function WorkshopDetails() {
     },
   });
 
-  // Mutation: Reject registration (for host) – delete the record
+  // Mutation: Reject registration (for host)
   const rejectMutation = useMutation({
     mutationFn: async (registrationId: string) => {
-      // Actually delete the record instead of just updating status
+      // Delete the registration record from the database
       const { error } = await supabase
         .from("workshop_registrations")
         .delete()
@@ -152,7 +152,7 @@ export default function WorkshopDetails() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["registrations", id, user?.id] });
-      toast.success("Registration rejected. Participant can re-register.");
+      toast.success("Registration rejected successfully");
     },
     onError: (error) => {
       toast.error("Failed to reject registration");
