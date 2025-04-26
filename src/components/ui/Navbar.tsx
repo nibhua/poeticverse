@@ -23,12 +23,12 @@ export function Navbar() {
     
     return (
         <motion.header 
-            className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b z-50 shadow-sm"
+            className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b z-50 shadow-sm h-16" // Explicitly set height to 16 (4rem)
             initial={{ y: -100 }}
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-            <div className="container mx-auto flex items-center justify-between px-4 py-3">
+            <div className="container mx-auto flex items-center justify-between px-4 py-3 h-full">
                 <Link to="/" className="flex items-center z-20">
                     <motion.img 
                         src="/logo1.png" 

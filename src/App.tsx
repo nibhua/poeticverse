@@ -74,7 +74,7 @@ function App() {
               <Navbar />
               <div className="flex w-full relative">
                 {user && <AppSidebar />} {/* Sidebar only if logged in */}
-                <main className="flex-1 transition-all duration-200 ease-in-out relative z-0">
+                <main className="flex-1 transition-all duration-200 ease-in-out relative z-0 pt-16"> {/* Added pt-16 for navbar height */}
                   <div className="max-w-[600px] mx-auto px-6 py-8 w-full">
                     <Routes>
                       <Route path="/" element={<Index />} />
