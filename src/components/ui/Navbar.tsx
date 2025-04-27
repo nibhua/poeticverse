@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -14,6 +14,11 @@ export function Navbar() {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     };
 
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
+    
     const menuItems = [
         { path: "/", label: "Home" },
         { path: "/challenges", label: "Challenges" },
@@ -88,37 +93,39 @@ export function Navbar() {
                 </motion.nav>
 
                 {/* Mobile navigation - overlay covers the whole screen */}
-                {isMobileMenuOpen && (
-                    <motion.div
-                        className="fixed inset-0 bg-white z-10 md:hidden"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                    >
-                        <div className="flex flex-col items-center justify-center h-full">
-                            <motion.div 
-                                className="flex flex-col items-center space-y-6"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 }}
-                            >
-                                {menuItems.map((item) => (
-                                    <Link 
-                                        key={item.path} 
-                                        to={item.path}
-                                        className={`text-xl font-medium ${
-                                            location.pathname === item.path ? 
-                                            "text-primary" : "text-gray-600"
-                                        }`}
-                                        onClick={toggleMobileMenu}
-                                    >
-                                        {item.label}
-                                    </Link>
-                                ))}
-                            </motion.div>
-                        </div>
-                    </motion.div>
-                )}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            className="fixed inset-0 bg-white z-10 md:hidden"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <div className="flex flex-col items-center justify-center h-full">
+                                <motion.div 
+                                    className="flex flex-col items-center space-y-6"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                >
+                                    {menuItems.map((item) => (
+                                        <Link 
+                                            key={item.path} 
+                                            to={item.path}
+                                            className={`text-xl font-medium ${
+                                                location.pathname === item.path ? 
+                                                "text-primary" : "text-gray-600"
+                                            }`}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    ))}
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </motion.header>
     );

@@ -18,11 +18,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function AppSidebar() {
   const location = useLocation();
   const { toggleSidebar, state } = useSidebar();
   const [username, setUsername] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -57,6 +59,13 @@ export function AppSidebar() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Close sidebar on route change when in mobile view
+  useEffect(() => {
+    if (isMobile && state === "expanded") {
+      toggleSidebar();
+    }
+  }, [location.pathname, isMobile]);
 
   const menuItems = [
     {
@@ -143,6 +152,7 @@ export function AppSidebar() {
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent hover:text-accent-foreground"
                 )}
+                onClick={() => isMobile && toggleSidebar()}
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.title}</span>
@@ -152,7 +162,7 @@ export function AppSidebar() {
         </div>
       </nav>
 
-      {/* Overlay when sidebar is open */}
+      {/* Overlay when sidebar is open - ensure it's clickable to close the sidebar */}
       <div
         className={cn(
           "fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-200 z-20",
