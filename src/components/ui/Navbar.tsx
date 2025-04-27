@@ -5,10 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Navbar() {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [username, setUsername] = useState<string | null>(null);
     const isMobile = useIsMobile();
     
     const toggleMobileMenu = () => {
@@ -19,6 +22,25 @@ export function Navbar() {
         setIsMobileMenuOpen(false);
     }, [location.pathname]);
     
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("username")
+                    .eq("id", session.user.id)
+                    .single();
+                
+                if (profile) {
+                    setUsername(profile.username);
+                }
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
+
     const menuItems = [
         { path: "/", label: "Home" },
         { path: "/search", label: "Search" },
@@ -29,7 +51,7 @@ export function Navbar() {
         { path: "/workshops", label: "Workshops" },
         { path: "/competitions", label: "Competitions" },
         { path: "/challenges", label: "Challenges" },
-        { path: "/login", label: "Profile" }
+        { path: username ? `/profile/${username}` : "/login", label: "Profile" }
     ];
     
     return (
@@ -96,7 +118,7 @@ export function Navbar() {
                     ))}
                 </motion.nav>
 
-                {/* Mobile navigation - now with a card background and better sizing */}
+                {/* Mobile navigation - improved styling and layout */}
                 <AnimatePresence>
                     {isMobileMenuOpen && (
                         <motion.div
@@ -110,20 +132,20 @@ export function Navbar() {
                             
                             {/* Navigation menu card */}
                             <motion.div 
-                                className="absolute right-2 top-14 w-[calc(100%-1rem)] max-w-sm"
+                                className="absolute right-2 top-14 w-[calc(100%-1rem)] max-w-xs"
                                 initial={{ y: -20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 exit={{ y: -20, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                             >
-                                <Card className="p-2 bg-white/95 backdrop-blur-sm border shadow-lg">
-                                    <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
-                                        <div className="grid grid-cols-2 gap-1">
+                                <Card className="p-2 bg-white/95 backdrop-blur-sm border shadow-lg overflow-hidden">
+                                    <ScrollArea className="max-h-[calc(100vh-5rem)]">
+                                        <div className="grid grid-cols-2 gap-1 p-1">
                                             {menuItems.map((item) => (
                                                 <Link 
                                                     key={item.path} 
                                                     to={item.path}
-                                                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                                                    className={`px-2 py-1.5 text-xs font-medium rounded-md ${
                                                         location.pathname === item.path ? 
                                                         "bg-primary/10 text-primary" : "text-gray-700 hover:bg-gray-100"
                                                     }`}
@@ -133,7 +155,7 @@ export function Navbar() {
                                                 </Link>
                                             ))}
                                         </div>
-                                    </div>
+                                    </ScrollArea>
                                 </Card>
                             </motion.div>
                         </motion.div>

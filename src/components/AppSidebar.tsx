@@ -1,7 +1,6 @@
 
 import { useLocation, Link } from "react-router-dom";
 import {
-  Menu,
   Home,
   Search,
   BookOpen,
@@ -123,20 +122,22 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Menu toggle button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-16 left-4 z-40 bg-background shadow-sm"
-        onClick={toggleSidebar}
-        aria-label={state === "expanded" ? "Close menu" : "Open menu"}
-      >
-        {state === "expanded" && isMobile ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <Menu className="h-5 w-5" />
-        )}
-      </Button>
+      {/* Menu toggle button - hidden on mobile */}
+      {!isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed top-16 left-4 z-40 bg-background shadow-sm hidden md:flex"
+          onClick={toggleSidebar}
+          aria-label={state === "expanded" ? "Close menu" : "Open menu"}
+        >
+          {state === "expanded" ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Home className="h-5 w-5" />
+          )}
+        </Button>
+      )}
 
       <nav
         className={cn(
@@ -182,7 +183,7 @@ export function AppSidebar() {
       <div
         className={cn(
           "min-h-screen transition-all duration-200 ease-in-out pt-12",
-          state === "collapsed" ? "ml-0" : "ml-64"
+          state === "collapsed" ? "ml-0" : "ml-0 md:ml-64"
         )}
       >
         <div className="container mx-auto px-4 py-8">
