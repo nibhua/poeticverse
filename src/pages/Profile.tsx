@@ -28,7 +28,6 @@ const Profile = () => {
   const navigate = useNavigate();
   const [isCurrentUser, setIsCurrentUser] = useState(false);
 
-  // Redirect to login if no username provided
   useEffect(() => {
     if (!username) {
       const redirectToProfile = async () => {
@@ -150,7 +149,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
       <ProfileHeader
         username={profile.username}
         fullName={profile.full_name}
