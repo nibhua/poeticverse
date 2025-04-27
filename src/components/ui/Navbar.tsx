@@ -21,10 +21,15 @@ export function Navbar() {
     
     const menuItems = [
         { path: "/", label: "Home" },
-        { path: "/challenges", label: "Challenges" },
-        { path: "/workshops", label: "Workshops" },
+        { path: "/search", label: "Search" },
+        { path: "/create-post", label: "Create" },
         { path: "/books", label: "Books" },
-        { path: "/audio-library", label: "Audio" }
+        { path: "/audio-library", label: "Audio Library" },
+        { path: "/licensing", label: "Licensing" },
+        { path: "/workshops", label: "Workshops" },
+        { path: "/competitions", label: "Competitions" },
+        { path: "/challenges", label: "Challenges" },
+        { path: "/login", label: "Profile" }
     ];
     
     return (
@@ -53,9 +58,9 @@ export function Navbar() {
                     </motion.h1>
                 </Link>
                 
-                {/* Mobile menu button - moved to the right side */}
+                {/* Mobile menu button */}
                 <button 
-                    className="md:hidden z-20 p-2 rounded-md hover:bg-gray-100 transition-colors ml-auto"
+                    className="md:hidden z-50 p-2 rounded-md hover:bg-gray-100 transition-colors"
                     onClick={toggleMobileMenu}
                     aria-label="Toggle menu"
                 >
@@ -73,7 +78,7 @@ export function Navbar() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
                 >
-                    {menuItems.map((item) => (
+                    {menuItems.slice(0, 5).map((item) => (
                         <Link 
                             key={item.path} 
                             to={item.path}
@@ -92,37 +97,44 @@ export function Navbar() {
                     ))}
                 </motion.nav>
 
-                {/* Mobile navigation - overlay covers the whole screen */}
+                {/* Mobile navigation - overlay covers the whole screen but stays within the viewport */}
                 <AnimatePresence>
                     {isMobileMenuOpen && (
                         <motion.div
-                            className="fixed inset-0 bg-white z-10 md:hidden"
+                            className="fixed inset-0 z-40 md:hidden"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                         >
-                            <div className="flex flex-col items-center justify-center h-full">
-                                <motion.div 
-                                    className="flex flex-col items-center space-y-6"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                >
-                                    {menuItems.map((item) => (
-                                        <Link 
-                                            key={item.path} 
-                                            to={item.path}
-                                            className={`text-xl font-medium ${
-                                                location.pathname === item.path ? 
-                                                "text-primary" : "text-gray-600"
-                                            }`}
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            {item.label}
-                                        </Link>
-                                    ))}
-                                </motion.div>
-                            </div>
+                            {/* Semi-transparent backdrop */}
+                            <div className="absolute inset-0 bg-black/50" onClick={toggleMobileMenu} />
+                            
+                            {/* Navigation menu card */}
+                            <motion.div 
+                                className="absolute right-0 top-0 h-full w-3/4 max-w-sm bg-white shadow-xl"
+                                initial={{ x: "100%" }}
+                                animate={{ x: 0 }}
+                                exit={{ x: "100%" }}
+                                transition={{ type: "tween", duration: 0.3 }}
+                            >
+                                <div className="flex flex-col h-full py-20 px-6">
+                                    <div className="flex flex-col space-y-4">
+                                        {menuItems.map((item) => (
+                                            <Link 
+                                                key={item.path} 
+                                                to={item.path}
+                                                className={`px-4 py-3 text-lg font-medium rounded-md ${
+                                                    location.pathname === item.path ? 
+                                                    "bg-primary/10 text-primary" : "text-gray-700 hover:bg-gray-100"
+                                                }`}
+                                                onClick={toggleMobileMenu}
+                                            >
+                                                {item.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>

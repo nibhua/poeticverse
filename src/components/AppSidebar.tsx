@@ -12,6 +12,7 @@ import {
   Users,
   Trophy,
   ListChecks,
+  X,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -65,7 +66,7 @@ export function AppSidebar() {
     if (isMobile && state === "expanded") {
       toggleSidebar();
     }
-  }, [location.pathname, isMobile]);
+  }, [location.pathname, isMobile, toggleSidebar, state]);
 
   const menuItems = [
     {
@@ -122,14 +123,19 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Fixed menu button with proper positioning */}
+      {/* Menu toggle button */}
       <Button
         variant="ghost"
         size="icon"
         className="fixed top-16 left-4 z-40 bg-background shadow-sm"
         onClick={toggleSidebar}
+        aria-label={state === "expanded" ? "Close menu" : "Open menu"}
       >
-        <Menu className="h-5 w-5" />
+        {state === "expanded" && isMobile ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <Menu className="h-5 w-5" />
+        )}
       </Button>
 
       <nav
@@ -169,9 +175,10 @@ export function AppSidebar() {
           state === "collapsed" ? "opacity-0 pointer-events-none" : "opacity-100 lg:opacity-0 lg:pointer-events-none"
         )}
         onClick={toggleSidebar}
+        aria-hidden="true"
       />
 
-      {/* Main content margin (updated for better spacing) */}
+      {/* Main content margin */}
       <div
         className={cn(
           "min-h-screen transition-all duration-200 ease-in-out pt-12",
