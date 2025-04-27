@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Card } from "@/components/ui/card";
 
 export function Navbar() {
     const location = useLocation();
@@ -14,7 +15,6 @@ export function Navbar() {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     };
 
-    // Close mobile menu when route changes
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [location.pathname]);
@@ -24,7 +24,7 @@ export function Navbar() {
         { path: "/search", label: "Search" },
         { path: "/create-post", label: "Create" },
         { path: "/books", label: "Books" },
-        { path: "/audio-library", label: "Audio Library" },
+        { path: "/audio-library", label: "Audio" },
         { path: "/licensing", label: "Licensing" },
         { path: "/workshops", label: "Workshops" },
         { path: "/competitions", label: "Competitions" },
@@ -34,22 +34,22 @@ export function Navbar() {
     
     return (
         <motion.header 
-            className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b z-50 shadow-sm h-16"
+            className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b z-50 shadow-sm h-12"
             initial={{ y: -100 }}
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-            <div className="container mx-auto flex items-center justify-between px-4 py-3 h-full">
+            <div className="container mx-auto flex items-center justify-between px-4 py-2 h-full">
                 <Link to="/" className="flex items-center z-20">
                     <motion.img 
                         src="/logo1.png" 
                         alt="Poeticverse Logo" 
-                        className="h-10"
+                        className="h-8"
                         whileHover={{ scale: 1.05 }}
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     />
                     <motion.h1 
-                        className="ml-3 text-xl font-bold bg-gradient-to-r from-purple-700 to-blue-500 bg-clip-text text-transparent"
+                        className="ml-2 text-lg font-bold bg-gradient-to-r from-purple-700 to-blue-500 bg-clip-text text-transparent"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
@@ -58,22 +58,21 @@ export function Navbar() {
                     </motion.h1>
                 </Link>
                 
-                {/* Mobile menu button */}
                 <button 
-                    className="md:hidden z-50 p-2 rounded-md hover:bg-gray-100 transition-colors"
+                    className="md:hidden z-50 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
                     onClick={toggleMobileMenu}
                     aria-label="Toggle menu"
                 >
                     {isMobileMenuOpen ? (
-                        <X className="h-6 w-6 text-gray-600" />
+                        <X className="h-5 w-5 text-gray-600" />
                     ) : (
-                        <Menu className="h-6 w-6 text-gray-600" />
+                        <Menu className="h-5 w-5 text-gray-600" />
                     )}
                 </button>
 
                 {/* Desktop navigation */}
                 <motion.nav 
-                    className="hidden md:flex items-center space-x-8"
+                    className="hidden md:flex items-center space-x-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
@@ -97,7 +96,7 @@ export function Navbar() {
                     ))}
                 </motion.nav>
 
-                {/* Mobile navigation - overlay covers the whole screen but stays within the viewport */}
+                {/* Mobile navigation - now with a card background and better sizing */}
                 <AnimatePresence>
                     {isMobileMenuOpen && (
                         <motion.div
@@ -111,29 +110,31 @@ export function Navbar() {
                             
                             {/* Navigation menu card */}
                             <motion.div 
-                                className="absolute right-0 top-0 h-full w-3/4 max-w-sm bg-white shadow-xl"
-                                initial={{ x: "100%" }}
-                                animate={{ x: 0 }}
-                                exit={{ x: "100%" }}
-                                transition={{ type: "tween", duration: 0.3 }}
+                                className="absolute right-2 top-14 w-[calc(100%-1rem)] max-w-sm"
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: -20, opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                             >
-                                <div className="flex flex-col h-full py-20 px-6">
-                                    <div className="flex flex-col space-y-4">
-                                        {menuItems.map((item) => (
-                                            <Link 
-                                                key={item.path} 
-                                                to={item.path}
-                                                className={`px-4 py-3 text-lg font-medium rounded-md ${
-                                                    location.pathname === item.path ? 
-                                                    "bg-primary/10 text-primary" : "text-gray-700 hover:bg-gray-100"
-                                                }`}
-                                                onClick={toggleMobileMenu}
-                                            >
-                                                {item.label}
-                                            </Link>
-                                        ))}
+                                <Card className="p-2 bg-white/95 backdrop-blur-sm border shadow-lg">
+                                    <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
+                                        <div className="grid grid-cols-2 gap-1">
+                                            {menuItems.map((item) => (
+                                                <Link 
+                                                    key={item.path} 
+                                                    to={item.path}
+                                                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                                                        location.pathname === item.path ? 
+                                                        "bg-primary/10 text-primary" : "text-gray-700 hover:bg-gray-100"
+                                                    }`}
+                                                    onClick={toggleMobileMenu}
+                                                >
+                                                    {item.label}
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                </Card>
                             </motion.div>
                         </motion.div>
                     )}
