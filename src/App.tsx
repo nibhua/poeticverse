@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -76,9 +77,9 @@ function App() {
             <BrowserRouter>
               <Navbar />
               <div className="flex w-full relative">
-                {user && <AppSidebar />}
+                {user && !isMobile && <AppSidebar />}
                 <main className="flex-1 transition-all duration-200 ease-in-out relative z-0 pt-16">
-                  <div className="w-full px-4 py-4 sm:py-6 mx-auto max-w-[600px]">
+                  <div className="w-full px-3 py-4 sm:py-6 mx-auto max-w-[600px] overflow-x-hidden">
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/landing" element={<Landing />} />

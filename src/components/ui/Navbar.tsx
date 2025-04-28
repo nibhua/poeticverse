@@ -64,8 +64,8 @@ export function Navbar() {
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-            <div className="container mx-auto flex items-center h-full px-2">
-                <Link to="/" className="flex items-center z-20">
+            <div className="container flex items-center justify-between h-full px-2 mx-auto">
+                <Link to="/" className="flex items-center">
                     <motion.img 
                         src="/logo1.png" 
                         alt="Poeticverse Logo" 
@@ -83,26 +83,28 @@ export function Navbar() {
                     </motion.h1>
                 </Link>
                 
-                <button 
-                    className="md:hidden z-50 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                    onClick={toggleMobileMenu}
-                    aria-label="Toggle menu"
-                >
-                    {isMobileMenuOpen ? (
-                        <X className="h-5 w-5 text-gray-600" />
-                    ) : (
-                        <Menu className="h-5 w-5 text-gray-600" />
-                    )}
-                </button>
+                {isMobile && (
+                    <button 
+                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors z-50"
+                        onClick={toggleMobileMenu}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? (
+                            <X className="h-5 w-5 text-gray-600" />
+                        ) : (
+                            <Menu className="h-5 w-5 text-gray-600" />
+                        )}
+                    </button>
+                )}
 
                 {/* Desktop navigation */}
                 <motion.nav 
-                    className="hidden md:flex items-center space-x-4 ml-auto"
+                    className="hidden md:flex items-center space-x-3"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
                 >
-                    {menuItems.slice(0, 5).map((item) => (
+                    {menuItems.slice(0, 7).map((item) => (
                         <Link 
                             key={item.path} 
                             to={item.path}
