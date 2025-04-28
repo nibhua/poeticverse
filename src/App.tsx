@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -33,6 +32,8 @@ import ChallengeDetails from "@/pages/ChallengeDetails";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/ui/Navbar";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import Contact from "@/pages/Contact";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,13 +72,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SidebarProvider defaultOpen={!isMobile}>
-          <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
+          <div className="min-h-screen flex w-full bg-background">
             <BrowserRouter>
               <Navbar />
               <div className="flex w-full relative">
                 {user && <AppSidebar />}
                 <main className="flex-1 transition-all duration-200 ease-in-out relative z-0 pt-16">
-                  <div className="w-full px-2 sm:px-4 py-4 sm:py-6 mx-auto max-w-[600px] sm:max-w-[600px]">
+                  <div className="w-full px-4 py-4 sm:py-6 mx-auto max-w-[600px]">
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/landing" element={<Landing />} />
@@ -110,6 +111,9 @@ function App() {
                       <Route path="/challenges" element={<Challenges />} />
                       <Route path="/challenges/create" element={<CreateChallenge />} />
                       <Route path="/challenges/:id" element={<ChallengeDetails />} />
+
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/contact" element={<Contact />} />
                     </Routes>
                   </div>
                 </main>

@@ -51,7 +51,10 @@ export function Navbar() {
         { path: "/workshops", label: "Workshops" },
         { path: "/competitions", label: "Competitions" },
         { path: "/challenges", label: "Challenges" },
-        { path: username ? `/profile/${username}` : "/login", label: "Profile" }
+        { path: "/privacy-policy", label: "Privacy Policy" },
+        { path: "/contact", label: "Contact" },
+        { path: username ? `/profile/${username}` : "/login", label: "Profile" },
+        { path: "/login", label: "Sign Out" }
     ];
     
     return (
@@ -61,7 +64,7 @@ export function Navbar() {
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-            <div className="container mx-auto flex items-center justify-between px-4 py-2 h-full">
+            <div className="container mx-auto flex items-center h-full px-2">
                 <Link to="/" className="flex items-center z-20">
                     <motion.img 
                         src="/logo1.png" 
@@ -94,7 +97,7 @@ export function Navbar() {
 
                 {/* Desktop navigation */}
                 <motion.nav 
-                    className="hidden md:flex items-center space-x-6"
+                    className="hidden md:flex items-center space-x-4 ml-auto"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
@@ -118,7 +121,7 @@ export function Navbar() {
                     ))}
                 </motion.nav>
 
-                {/* Mobile navigation - improved styling and layout */}
+                {/* Mobile navigation */}
                 <AnimatePresence>
                     {isMobileMenuOpen && (
                         <motion.div
@@ -127,10 +130,8 @@ export function Navbar() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                         >
-                            {/* Semi-transparent backdrop */}
                             <div className="absolute inset-0 bg-black/50" onClick={toggleMobileMenu} />
                             
-                            {/* Navigation menu card */}
                             <motion.div 
                                 className="absolute right-2 top-14 w-[calc(100%-1rem)] max-w-xs"
                                 initial={{ y: -20, opacity: 0 }}
@@ -138,8 +139,8 @@ export function Navbar() {
                                 exit={{ y: -20, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                             >
-                                <Card className="p-2 bg-white/95 backdrop-blur-sm border shadow-lg overflow-hidden">
-                                    <ScrollArea className="max-h-[calc(100vh-5rem)]">
+                                <Card className="p-2 bg-white/95 backdrop-blur-sm border shadow-lg">
+                                    <ScrollArea className="h-[calc(100vh-8rem)]">
                                         <div className="grid grid-cols-2 gap-1 p-1">
                                             {menuItems.map((item) => (
                                                 <Link 
