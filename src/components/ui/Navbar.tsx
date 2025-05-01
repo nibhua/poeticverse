@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,8 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function Navbar() {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [username, setUsername] = useState<string | null>(null);
+    const [user, setUser] = useState<any>(null);
     const isMobile = useIsMobile();
     
     const toggleMobileMenu = () => {
@@ -25,6 +27,8 @@ export function Navbar() {
     useEffect(() => {
         const fetchUserProfile = async () => {
             const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user || null);
+            
             if (session?.user?.id) {
                 const { data: profile } = await supabase
                     .from("profiles")
@@ -39,9 +43,32 @@ export function Navbar() {
         };
 
         fetchUserProfile();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user || null);
+            if (session?.user?.id) {
+                fetchUserProfile();
+            } else {
+                setUsername(null);
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const menuItems = [
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        navigate('/login');
+    };
+
+    // Public menu items (always visible)
+    const publicMenuItems = [
+        { path: "/", label: "Home" },
+        { path: "/login", label: "Login" }
+    ];
+    
+    // Menu items only visible when logged in
+    const privateMenuItems = [
         { path: "/", label: "Home" },
         { path: "/search", label: "Search" },
         { path: "/create-post", label: "Create" },
@@ -53,8 +80,10 @@ export function Navbar() {
         { path: "/privacy-policy", label: "Privacy Policy" },
         { path: "/contact", label: "Contact" },
         { path: username ? `/profile/${username}` : "/login", label: "Profile" },
-        { path: "/login", label: "Sign Out" }
     ];
+    
+    // Use the appropriate menu items based on authentication status
+    const menuItems = user ? privateMenuItems : publicMenuItems;
     
     return (
         <motion.header 
@@ -64,7 +93,7 @@ export function Navbar() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
             <div className="flex items-center justify-between h-full px-2 mx-auto w-full">
-                <Link to="/" className="flex items-center h-full p-0 ml-0">
+                <Link to="/" className="flex items-center h-full p-0 m-0">
                     <motion.img 
                         src="/logo1.png" 
                         alt="Poeticverse Logo" 
@@ -96,31 +125,43 @@ export function Navbar() {
                     </button>
                 )}
 
-                {/* Desktop navigation */}
-                <motion.nav 
-                    className="hidden md:flex items-center space-x-1 overflow-x-auto scrollbar-hide pr-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    {menuItems.slice(0, 10).map((item) => (
-                        <Link 
-                            key={item.path} 
-                            to={item.path}
-                            className={`relative px-1.5 py-1 text-xs whitespace-nowrap font-medium transition-colors
-                                ${location.pathname === item.path ? 
-                                "text-primary" : "text-gray-600 hover:text-gray-900"}`}
-                        >
-                            {item.label}
-                            {location.pathname === item.path && (
-                                <motion.span 
-                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                                    layoutId="navbar-indicator"
-                                />
-                            )}
-                        </Link>
-                    ))}
-                </motion.nav>
+                {/* Desktop navigation - scrollable container */}
+                <div className="hidden md:block overflow-x-auto flex-1 ml-4 scrollbar-hide">
+                    <motion.nav 
+                        className="flex items-center space-x-1 pr-2 justify-start"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        {menuItems.map((item) => (
+                            <Link 
+                                key={item.path} 
+                                to={item.path}
+                                className={`relative px-3 py-1 text-sm whitespace-nowrap font-medium transition-colors
+                                    ${location.pathname === item.path ? 
+                                    "text-primary" : "text-gray-600 hover:text-gray-900"}`}
+                            >
+                                {item.label}
+                                {location.pathname === item.path && (
+                                    <motion.span 
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
+                                        layoutId="navbar-indicator"
+                                    />
+                                )}
+                            </Link>
+                        ))}
+                        
+                        {user && (
+                            <button 
+                                onClick={handleSignOut}
+                                className="relative px-3 py-1 text-sm whitespace-nowrap font-medium text-gray-600 hover:text-gray-900 flex items-center"
+                            >
+                                <LogOut className="h-4 w-4 mr-1" />
+                                Sign Out
+                            </button>
+                        )}
+                    </motion.nav>
+                </div>
 
                 {/* Mobile navigation */}
                 <AnimatePresence>
@@ -156,6 +197,19 @@ export function Navbar() {
                                                     {item.label}
                                                 </Link>
                                             ))}
+                                            
+                                            {user && (
+                                                <button 
+                                                    onClick={() => {
+                                                        handleSignOut();
+                                                        toggleMobileMenu();
+                                                    }}
+                                                    className="px-2 py-1.5 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-100 flex items-center"
+                                                >
+                                                    <LogOut className="h-3 w-3 mr-1" />
+                                                    Sign Out
+                                                </button>
+                                            )}
                                         </div>
                                     </ScrollArea>
                                 </Card>

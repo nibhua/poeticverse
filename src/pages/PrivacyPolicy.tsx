@@ -1,57 +1,101 @@
 
+import { motion } from "framer-motion";
+
 export default function PrivacyPolicy() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Privacy Policy</h1>
-      <div className="prose">
-        <h2>Introduction</h2>
-        <p>This Privacy Policy describes how we collect, use, and handle your personal information when you use our services. At Poeticverse, we take your privacy seriously and are committed to protecting your personal data.</p>
+    <motion.div 
+      className="max-w-3xl mx-auto py-8 px-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.h1 
+        className="text-4xl font-bold text-gradient-subtle mb-6"
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
+        Privacy Policy
+      </motion.h1>
+      
+      <motion.div 
+        className="prose mt-8 glass-card p-8"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+      >
+        <h2>1. Introduction</h2>
+        <p>
+          Welcome to Poeticverse. We are committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, and share information when you use our website and services.
+        </p>
         
-        <h2>Information Collection and Use</h2>
-        <p>We collect information to provide better services to our users. The types of personal information we collect include:</p>
-        <ul>
-          <li>Account information: When you create an account, we collect your name, email address, and profile information.</li>
-          <li>Content you create: Poetry, comments, likes, and other content you create or share on the platform.</li>
-          <li>Usage data: Information about how you use our services, such as features you access and time spent on the platform.</li>
-          <li>Device information: Hardware model, operating system version, unique device identifiers.</li>
+        <h2>2. Information We Collect</h2>
+        <p>
+          We collect information when you:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Create an account</li>
+          <li>Upload poetry or other content</li>
+          <li>Participate in workshops or competitions</li>
+          <li>Comment on or like other users' content</li>
+          <li>Contact our support team</li>
         </ul>
         
-        <h2>Data Sharing</h2>
-        <p>We do not share personal information with companies, organizations, or individuals outside of our company unless one of the following circumstances applies:</p>
-        <ul>
-          <li><strong>With your consent:</strong> We will share personal information when you have given us explicit permission to do so.</li>
-          <li><strong>For legal reasons:</strong> We will share personal information if we believe it's reasonably necessary to comply with a law, regulation, or legal request.</li>
-          <li><strong>For external processing:</strong> We provide personal information to our affiliates or other trusted businesses to process it for us, based on our instructions and in compliance with our privacy policy.</li>
+        <h2>3. How We Use Your Information</h2>
+        <p>
+          We use the information we collect to:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Provide, maintain, and improve our services</li>
+          <li>Process transactions</li>
+          <li>Send you technical notices and updates</li>
+          <li>Respond to your comments and questions</li>
+          <li>Protect against harmful or illegal activity</li>
         </ul>
         
-        <h2>Security</h2>
-        <p>We work hard to protect our users from unauthorized access to or unauthorized alteration, disclosure, or destruction of information we hold. We implement:</p>
-        <ul>
-          <li>Encryption to keep your data private while in transit</li>
-          <li>Regular security reviews of our practices</li>
-          <li>Physical security measures for our data centers</li>
-          <li>Access restrictions to personal information</li>
+        <h2>4. Sharing Your Information</h2>
+        <p>
+          We may share your information with:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Service providers who help us operate our platform</li>
+          <li>Legal authorities when required by law</li>
+          <li>Other users, according to your privacy settings</li>
         </ul>
         
-        <h2>Your Rights</h2>
-        <p>Depending on your location, you may have certain rights regarding your personal data, including:</p>
-        <ul>
-          <li>Access and receive a copy of your personal data</li>
-          <li>Rectify inaccurate personal data</li>
-          <li>Request deletion of your personal data</li>
-          <li>Restrict or object to processing of your data</li>
-          <li>Data portability</li>
+        <h2>5. Your Rights</h2>
+        <p>
+          You have the right to:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>Access and download a copy of your data</li>
+          <li>Request correction of inaccurate personal information</li>
+          <li>Request deletion of your personal information</li>
+          <li>Object to processing of your personal information</li>
         </ul>
         
-        <h2>Children's Privacy</h2>
-        <p>Our services are not intended for children under 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.</p>
+        <h2>6. Data Retention</h2>
+        <p>
+          We retain your personal information for as long as necessary to provide you with our services and as required by law.
+        </p>
         
-        <h2>Changes</h2>
-        <p>Our Privacy Policy may change from time to time. We will post any privacy policy changes on this page and, if the changes are significant, provide more prominent notice.</p>
+        <h2>7. Security</h2>
+        <p>
+          We implement reasonable measures to protect your information from unauthorized access, alteration, or destruction. However, no method of transmission over the internet or electronic storage is 100% secure.
+        </p>
         
-        <h2>Contact Us</h2>
-        <p>If you have questions about this Privacy Policy, please <a href="/contact" className="text-primary hover:underline">contact us</a>.</p>
-      </div>
-    </div>
+        <h2>8. Changes to This Policy</h2>
+        <p>
+          We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
+        </p>
+        
+        <h2>9. Contact Us</h2>
+        <p>
+          If you have any questions about our Privacy Policy or practices, please contact us at privacy@poeticverse.com.
+        </p>
+        
+        <p className="text-sm text-gray-500 mt-8">Last Updated: May 1, 2025</p>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -38,6 +38,7 @@
     /* Reduced margin to remove the gap */
     margin-top: 0;
     overflow-x: hidden;
+    background: linear-gradient(135deg, #f5f7fa 0%, #eef2f3 100%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -92,19 +93,47 @@
     @apply text-xl font-bold mt-6 mb-3;
   }
   
-  /* Card hover effects */
+  /* Modern card styles */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
   
+  .card-modern {
+    @apply relative overflow-hidden rounded-2xl border border-white/20 bg-white/80 shadow-xl backdrop-blur-md transition-all duration-300 hover:shadow-2xl;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  
+  .card-modern:hover {
+    transform: translateY(-5px) rotateX(2deg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  }
+  
   /* Gradient button */
   .btn-gradient {
-    @apply bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90;
+    @apply relative overflow-hidden bg-gradient-to-r from-primary to-purple-600 text-white transition-all duration-300;
+  }
+  
+  .btn-gradient::before {
+    content: '';
+    @apply absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300;
+  }
+  
+  .btn-gradient:hover::before {
+    @apply opacity-100;
   }
   
   /* Glass morphism */
   .glass {
     @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+  
+  .glass-card {
+    @apply rounded-2xl bg-white/40 backdrop-blur-md border border-white/30 shadow-lg transition-all duration-300;
+  }
+  
+  .glass-card:hover {
+    @apply bg-white/60 border-white/40 shadow-xl;
   }
 
   /* Responsive container with proper padding */
@@ -115,6 +144,57 @@
   /* Form controls with consistent styling */
   .form-control {
     @apply w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none;
+  }
+  
+  /* 3D Cards */
+  .card-3d {
+    @apply relative overflow-hidden rounded-2xl transition-all duration-500;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    box-shadow: 
+      0 5px 15px -5px rgba(0, 0, 0, 0.1),
+      0 10px 30px -10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-3d:hover {
+    transform: translateY(-10px) rotateX(5deg);
+    box-shadow: 
+      0 15px 35px -15px rgba(0, 0, 0, 0.2),
+      0 20px 45px -20px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Floating animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  /* Glow effect */
+  .glow {
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.2), 
+                0 0 20px rgba(138, 43, 226, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .glow:hover {
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.3), 
+                0 0 30px rgba(138, 43, 226, 0.2);
+  }
+  
+  /* Modern search bar */
+  .search-modern {
+    @apply w-full rounded-full bg-white/80 border border-gray-200 pl-10 pr-4 py-2 text-gray-700 
+           focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all 
+           duration-300 shadow-sm backdrop-blur-sm;
+  }
+  
+  .search-modern:focus {
+    @apply bg-white shadow-md;
   }
 }
 
@@ -127,8 +207,16 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   
+  .font-display {
+    font-family: 'Raleway', sans-serif;
+  }
+  
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-subtle {
+    @apply bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent;
   }
   
   .animation-delay-200 {
@@ -160,5 +248,87 @@
 
   .flex-between {
     @apply flex items-center justify-between;
+  }
+  
+  /* Backdrop filters */
+  .backdrop-blur-xs {
+    backdrop-filter: blur(2px);
+  }
+  
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+  
+  .backdrop-blur-md {
+    backdrop-filter: blur(8px);
+  }
+  
+  .backdrop-blur-lg {
+    backdrop-filter: blur(12px);
+  }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .bg-gradient-blue {
+    background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+  }
+  
+  .bg-gradient-pink {
+    background: linear-gradient(135deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%);
+  }
+  
+  /* 3D Transform utilities */
+  .transform-preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  /* Hover effects */
+  .hover-translate-up {
+    @apply transition-transform duration-300;
+  }
+  
+  .hover-translate-up:hover {
+    transform: translateY(-8px);
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300;
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Soft shadows */
+  .shadow-soft {
+    box-shadow: 
+      0 5px 15px -3px rgba(0, 0, 0, 0.05),
+      0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-soft-lg {
+    box-shadow: 
+      0 10px 25px -5px rgba(0, 0, 0, 0.08),
+      0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Neumorphism */
+  .neumorphic {
+    box-shadow: 
+      5px 5px 10px rgba(0, 0, 0, 0.05),
+      -5px -5px 10px rgba(255, 255, 255, 0.7);
+  }
+  
+  .neumorphic-inset {
+    box-shadow: 
+      inset 5px 5px 10px rgba(0, 0, 0, 0.05),
+      inset -5px -5px 10px rgba(255, 255, 255, 0.7);
   }
 }
