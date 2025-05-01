@@ -1,12 +1,16 @@
+
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Settings } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, Settings, Search as SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Books = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
   
   const { data: books, isLoading } = useQuery({
     queryKey: ['poetry-books'],
@@ -29,6 +33,13 @@ const Books = () => {
       return data;
     },
   });
+
+  const filteredBooks = books?.filter(book =>
+    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.genre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    book.profiles.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -65,13 +76,24 @@ const Books = () => {
       </header>
 
       <main className="max-w-2xl mx-auto p-4">
-        {books?.length === 0 ? (
+        <div className="relative mb-4">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="search"
+            placeholder="Search books..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {filteredBooks?.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
-            No poetry books available yet
+            No poetry books available matching your search
           </div>
         ) : (
           <div className="grid gap-4">
-            {books?.map((book) => (
+            {filteredBooks?.map((book) => (
               <motion.div
                 key={book.id}
                 initial={{ opacity: 0, y: 20 }}

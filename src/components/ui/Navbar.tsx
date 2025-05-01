@@ -47,7 +47,6 @@ export function Navbar() {
         { path: "/create-post", label: "Create" },
         { path: "/books", label: "Books" },
         { path: "/audio-library", label: "Audio" },
-        { path: "/licensing", label: "Licensing" },
         { path: "/workshops", label: "Workshops" },
         { path: "/competitions", label: "Competitions" },
         { path: "/challenges", label: "Challenges" },
@@ -64,8 +63,8 @@ export function Navbar() {
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-            <div className="container flex items-center justify-between h-full px-2 mx-auto">
-                <Link to="/" className="flex items-center">
+            <div className="flex items-center justify-between h-full px-2 mx-auto w-full">
+                <Link to="/" className="flex items-center h-full p-0 ml-0">
                     <motion.img 
                         src="/logo1.png" 
                         alt="Poeticverse Logo" 
@@ -99,16 +98,16 @@ export function Navbar() {
 
                 {/* Desktop navigation */}
                 <motion.nav 
-                    className="hidden md:flex items-center space-x-3"
+                    className="hidden md:flex items-center space-x-1 overflow-x-auto scrollbar-hide pr-2"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
                 >
-                    {menuItems.slice(0, 7).map((item) => (
+                    {menuItems.slice(0, 10).map((item) => (
                         <Link 
                             key={item.path} 
                             to={item.path}
-                            className={`relative px-2 py-1 text-sm font-medium transition-colors
+                            className={`relative px-1.5 py-1 text-xs whitespace-nowrap font-medium transition-colors
                                 ${location.pathname === item.path ? 
                                 "text-primary" : "text-gray-600 hover:text-gray-900"}`}
                         >

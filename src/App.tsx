@@ -73,13 +73,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SidebarProvider defaultOpen={!isMobile}>
-          <div className="min-h-screen flex w-full bg-background">
+          <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
             <BrowserRouter>
               <Navbar />
               <div className="flex w-full relative">
                 {user && !isMobile && <AppSidebar />}
-                <main className="flex-1 transition-all duration-200 ease-in-out relative z-0 pt-16">
-                  <div className="w-full px-3 py-4 sm:py-6 mx-auto max-w-[600px] overflow-x-hidden">
+                <main className="flex-1 transition-all duration-200 ease-in-out relative z-0 pt-16 max-w-full overflow-x-hidden">
+                  <div className="w-full px-2 py-4 sm:py-6 mx-auto max-w-[600px] overflow-x-hidden">
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/landing" element={<Landing />} />
