@@ -1,10 +1,12 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Image as ImageIcon, X, Clock } from "lucide-react";
+import { Image as ImageIcon, X, Clock, SendHorizontal, FileText, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage } from "@/utils/imageUpload";
 
@@ -87,93 +89,181 @@ const CreatePost = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+  };
+
   return (
-    <div className="pb-20">
-      <div className="sticky top-0 bg-white border-b border-gray-200 p-4">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="pb-20"
+    >
+      <motion.div 
+        variants={itemVariants}
+        className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-4 z-10 rounded-b-lg glass-card shadow-sm"
+      >
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">Create Post</h1>
+          <motion.h1 
+            className="text-2xl font-bold text-gradient-subtle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            Create Post
+          </motion.h1>
           <Button
             onClick={handleSubmit}
             disabled={!content.trim() || loading}
+            className="btn-gradient rounded-full px-5 py-2 h-auto"
           >
-            {loading ? "Posting..." : "Post"}
+            {loading ? 
+              "Posting..." : 
+              <span className="flex items-center">
+                <SendHorizontal className="h-4 w-4 mr-2" />
+                Post
+              </span>
+            }
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="p-4 space-y-4">
-        <div className="flex space-x-2">
+      <motion.div 
+        variants={containerVariants}
+        className="p-4 space-y-6"
+      >
+        <motion.div 
+          variants={itemVariants}
+          className="flex space-x-2"
+        >
           <Button
             variant={postType === "text" ? "default" : "outline"}
             onClick={() => setPostType("text")}
+            className="flex-1 rounded-full"
           >
+            <FileText className="h-4 w-4 mr-2" />
             Text Post
           </Button>
           <Button
             variant={postType === "image" ? "default" : "outline"}
             onClick={() => setPostType("image")}
+            className="flex-1 rounded-full"
           >
+            <ImageIcon className="h-4 w-4 mr-2" />
             Image Post
           </Button>
           <Button
             variant={isTemporary ? "default" : "outline"}
             onClick={() => setIsTemporary(!isTemporary)}
-            className="ml-auto"
+            className="rounded-full"
           >
             <Clock className="h-4 w-4 mr-2" />
             24h
           </Button>
-        </div>
+        </motion.div>
 
-        {postType === "image" && (
-          <div className="space-y-4">
-            {!imagePreview ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="flex flex-col items-center justify-center cursor-pointer"
-                >
-                  <ImageIcon className="h-12 w-12 text-gray-400" />
-                  <span className="mt-2 text-sm text-gray-500">
-                    Click to upload an image
-                  </span>
-                </label>
-              </div>
-            ) : (
-              <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full rounded-lg"
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={removeSelectedImage}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+        <motion.div 
+          variants={itemVariants}
+          className="card-3d perspective-1000"
+        >
+          <div className="glass-card p-6 transform-preserve-3d">
+            {postType === "image" && (
+              <motion.div 
+                variants={itemVariants}
+                className="space-y-4 mb-4"
+              >
+                {!imagePreview ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50/50 transition-colors hover:bg-gray-50/80">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label
+                      htmlFor="image-upload"
+                      className="flex flex-col items-center justify-center cursor-pointer"
+                    >
+                      <motion.div 
+                        initial={{ scale: 1 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-16 h-16 rounded-full bg-gradient-to-r from-primary/20 to-primary/30 flex items-center justify-center mb-3"
+                      >
+                        <ImageIcon className="h-8 w-8 text-primary/70" />
+                      </motion.div>
+                      <span className="text-base font-medium text-gray-600">
+                        Click to upload an image
+                      </span>
+                      <span className="mt-1 text-sm text-gray-500">
+                        JPG, PNG or GIF up to 10MB
+                      </span>
+                    </label>
+                  </div>
+                ) : (
+                  <motion.div 
+                    className="relative rounded-xl overflow-hidden"
+                    layoutId="image-preview"
+                  >
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full rounded-lg"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 rounded-full h-8 w-8"
+                      onClick={removeSelectedImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                )}
+              </motion.div>
             )}
-          </div>
-        )}
 
-        <Textarea
-          placeholder={postType === "text" ? "What's on your mind?" : "Add a caption..."}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className={postType === "text" ? "min-h-[200px]" : "min-h-[100px]"}
-        />
-      </div>
-    </div>
+            <motion.div variants={itemVariants}>
+              <Textarea
+                placeholder={postType === "text" ? "What's on your mind?" : "Add a caption..."}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className={`focus-visible:ring-1 focus-visible:ring-primary border-none bg-transparent resize-none min-h-[${postType === "text" ? "200px" : "100px"}]`}
+              />
+            </motion.div>
+            
+            <motion.div 
+              variants={itemVariants}
+              className="mt-4 flex items-center text-sm text-gray-500"
+            >
+              {isTemporary ? (
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  <span>This post will expire in 24 hours</span>
+                </div>
+              ) : null}
+            </motion.div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 

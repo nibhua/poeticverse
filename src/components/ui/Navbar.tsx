@@ -63,8 +63,8 @@ export function Navbar() {
 
     // Public menu items (always visible)
     const publicMenuItems = [
-        { path: "/", label: "Home" },
-        { path: "/login", label: "Login" }
+        { path: "/privacy-policy", label: "Privacy Policy" },
+        { path: "/contact", label: "Contact" }
     ];
     
     // Menu items only visible when logged in
@@ -93,7 +93,7 @@ export function Navbar() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
             <div className="flex items-center justify-between h-full px-2 mx-auto w-full">
-                <Link to="/" className="flex items-center h-full p-0 m-0">
+                <Link to={user ? "/" : "/login"} className="flex items-center h-full p-0 m-0">
                     <motion.img 
                         src="/logo1.png" 
                         alt="Poeticverse Logo" 

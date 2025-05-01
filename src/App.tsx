@@ -36,16 +36,17 @@ import { Navbar } from "@/components/ui/Navbar";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import Contact from "@/pages/Contact";
 
+// Configure QueryClient with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
     },
   },
 });
 
-// Protected route wrapper
+// Protected route wrapper that checks for authentication
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-full border-t-4 border-primary animate-spin"></div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -100,7 +107,13 @@ const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-full border-t-4 border-primary animate-spin"></div>
+        </div>
+      </div>
+    );
   }
 
   if (user) {

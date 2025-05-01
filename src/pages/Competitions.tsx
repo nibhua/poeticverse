@@ -174,7 +174,7 @@ export default function Competitions() {
                         
                         <div className="flex items-center text-sm text-gray-600">
                           <Users className="h-4 w-4 mr-1 text-primary/70" />
-                          <span>{competition.entry_count || 0} entries</span>
+                          <span>0 entries</span>
                         </div>
                       </div>
                     </div>

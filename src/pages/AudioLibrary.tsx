@@ -1,16 +1,21 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, Headphones, Play, Pause, Plus, Volume2, Clock, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 export default function AudioLibrary() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,7 +34,7 @@ export default function AudioLibrary() {
         .from("audio_poems")
         .select(`
           *,
-          user:profiles!audio_poems_user_id_fkey(username)
+          user:profiles!audio_poems_user_id_fkey(username, profile_pic_url)
         `);
 
       if (searchTerm) {
@@ -52,121 +57,292 @@ export default function AudioLibrary() {
     },
   });
 
+  const togglePlay = (audioUrl: string, poemId: string) => {
+    if (currentAudio === poemId) {
+      if (isPlaying) {
+        audioRef.current?.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current?.play();
+        setIsPlaying(true);
+      }
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setCurrentAudio(poemId);
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.play();
+      setIsPlaying(true);
+      
+      // Only increment play count for other users' audio
+      const poem = audioPoems?.find(p => p.id === poemId);
+      if (poem && poem.user_id !== currentUserId) {
+        incrementPlayCount(poemId);
+      }
+    }
+  };
+
+  const incrementPlayCount = async (poemId: string) => {
+    try {
+      await supabase.rpc('increment_audio_impression', {
+        poem_id: poemId
+      });
+    } catch (error) {
+      console.error("Error incrementing play count:", error);
+    }
+  };
+
   const explorePoems = audioPoems?.filter(poem => poem.user_id !== currentUserId) || [];
   const myPoems = audioPoems?.filter(poem => poem.user_id === currentUserId) || [];
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
-  }
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Audio Poetry Library</h1>
-        <Link to="/audio-library/create">
-          <Button>Upload Audio Poem</Button>
-        </Link>
-      </div>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="relative w-20 h-20">
+          <div className="absolute inset-0 rounded-full border-t-4 border-primary animate-spin"></div>
+          <Headphones className="absolute inset-0 m-auto h-10 w-10 text-primary/50" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div 
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        variants={itemVariants}
+      >
+        <div>
+          <motion.h1 
+            className="text-3xl md:text-4xl font-bold text-gradient-subtle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Audio Poetry Library
+          </motion.h1>
+          <motion.p 
+            className="text-gray-600 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            Listen to poetic voices from around the world
+          </motion.p>
+        </div>
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
+          <Link to="/audio-library/create">
+            <Button className="btn-gradient rounded-full px-6 py-2 h-auto font-medium">
+              <Plus className="h-4 w-4 mr-2" />
+              Upload Audio
+            </Button>
+          </Link>
+        </motion.div>
+      </motion.div>
+
+      <motion.div 
+        className="relative z-10 group"
+        variants={itemVariants}
+      >
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors duration-200" />
         <Input
           placeholder="Search poems by title or description..."
-          className="pl-10"
+          className="search-modern w-full pl-12"
           value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
-      </div>
+      </motion.div>
 
-      <Tabs defaultValue="explore" className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="explore" className="flex-1">Explore</TabsTrigger>
-          <TabsTrigger value="my-audio" className="flex-1">My Audio</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="explore">
-          <div className="grid gap-4">
-            {explorePoems.map((poem) => (
-              <div key={poem.id} className="p-4 border rounded-lg bg-card">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold">{poem.title}</h2>
-                    <p className="text-sm text-muted-foreground">By {poem.user?.username}</p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {poem.impression_count} listens
-                  </div>
-                </div>
-                <p className="mt-2 text-gray-600">{poem.description}</p>
-                <audio controls className="w-full mt-4">
-                  <source src={poem.audio_url} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            ))}
-            {explorePoems.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No audio poems found in explore section
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="my-audio">
-          <div className="grid gap-4">
-            {myPoems.map((poem) => (
-              <div key={poem.id} className="p-4 border rounded-lg bg-card">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold">{poem.title}</h2>
-                    <p className="text-sm text-muted-foreground">By {poem.user?.username}</p>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <div className="text-sm text-muted-foreground">
-                      {poem.impression_count} listens
-                    </div>
-                    {poem.content_type === 'paid' && (
-                      <Button variant="secondary" size="sm">
-                        Rent for ${poem.rental_price}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-2 text-gray-600">{poem.description}</p>
-                <audio 
-                  controls 
-                  className="w-full mt-4"
-                  onPlay={() => {
-                    // Only play first 30 seconds for preview if it's a paid poem
-                    if (poem.content_type === 'paid') {
-                      setTimeout(() => {
-                        const audio = document.querySelector(`audio[data-id="${poem.id}"]`);
-                        if (audio) {
-                          (audio as HTMLAudioElement).pause();
-                          (audio as HTMLAudioElement).currentTime = 0;
-                        }
-                      }, 30000);
-                    }
-                  }}
-                  data-id={poem.id}
+      <motion.div variants={itemVariants}>
+        <Tabs defaultValue="explore" className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="explore" className="flex-1">Explore</TabsTrigger>
+            <TabsTrigger value="my-audio" className="flex-1">My Audio</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="explore">
+            <motion.div 
+              className="grid gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {explorePoems.map((poem) => (
+                <motion.div 
+                  key={poem.id} 
+                  className="card-3d group perspective-1000"
+                  variants={itemVariants}
                 >
-                  <source src={poem.audio_url} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            ))}
-            {myPoems.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                You haven't uploaded any audio poems yet
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+                  <div className="glass-card p-5 transform-preserve-3d">
+                    <div className="flex justify-between items-start">
+                      <div className="flex space-x-3">
+                        <button 
+                          onClick={() => togglePlay(poem.audio_url, poem.id)}
+                          className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary flex items-center justify-center text-white transform transition-transform duration-300 hover:scale-105"
+                        >
+                          {currentAudio === poem.id && isPlaying ? (
+                            <Pause className="h-6 w-6" />
+                          ) : (
+                            <Play className="h-6 w-6 ml-1" />
+                          )}
+                        </button>
+                        <div>
+                          <h2 className="text-xl font-semibold group-hover:text-primary transition-colors duration-300">{poem.title}</h2>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <User className="h-3 w-3" />
+                            <span>{poem.user?.username || "Anonymous"}</span>
+                            <span className="text-gray-400">•</span>
+                            <div className="flex items-center">
+                              <Volume2 className="h-3 w-3 mr-1" />
+                              <span>{poem.impression_count} listens</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{poem.duration ? formatDuration(poem.duration) : "--:--"}</span>
+                      </div>
+                    </div>
+                    {poem.description && (
+                      <p className="mt-3 text-gray-600">{poem.description}</p>
+                    )}
+                    <div className="mt-4 h-[2px] bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: currentAudio === poem.id ? '30%' : '0%' }}></div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+              {explorePoems.length === 0 && (
+                <motion.div 
+                  className="text-center py-16 glass-card"
+                  variants={itemVariants}
+                >
+                  <Headphones className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl font-medium text-gray-400">No audio poems found</p>
+                  <p className="text-gray-500 mt-2">
+                    {searchTerm ? "Try adjusting your search" : "Be the first to upload an audio poem"}
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="my-audio">
+            <motion.div 
+              className="grid gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {myPoems.map((poem) => (
+                <motion.div 
+                  key={poem.id} 
+                  className="card-3d group perspective-1000"
+                  variants={itemVariants}
+                >
+                  <div className="glass-card p-5 transform-preserve-3d">
+                    <div className="flex justify-between items-start">
+                      <div className="flex space-x-3">
+                        <button 
+                          onClick={() => togglePlay(poem.audio_url, poem.id)}
+                          className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary flex items-center justify-center text-white transform transition-transform duration-300 hover:scale-105"
+                        >
+                          {currentAudio === poem.id && isPlaying ? (
+                            <Pause className="h-6 w-6" />
+                          ) : (
+                            <Play className="h-6 w-6 ml-1" />
+                          )}
+                        </button>
+                        <div>
+                          <h2 className="text-xl font-semibold group-hover:text-primary transition-colors duration-300">{poem.title}</h2>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <span>My upload</span>
+                            <span className="text-gray-400">•</span>
+                            <div className="flex items-center">
+                              <Volume2 className="h-3 w-3 mr-1" />
+                              <span>{poem.impression_count} listens</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <div className="text-sm text-muted-foreground flex items-center justify-end">
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span>{poem.duration ? formatDuration(poem.duration) : "--:--"}</span>
+                        </div>
+                        {poem.content_type === 'paid' && (
+                          <Button variant="secondary" size="sm" className="rounded-full">
+                            Rent for ${poem.rental_price}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {poem.description && (
+                      <p className="mt-3 text-gray-600">{poem.description}</p>
+                    )}
+                    <div className="mt-4 h-[2px] bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: currentAudio === poem.id ? '30%' : '0%' }}></div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+              {myPoems.length === 0 && (
+                <motion.div 
+                  className="text-center py-16 glass-card"
+                  variants={itemVariants}
+                >
+                  <Headphones className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl font-medium text-gray-400">You haven't uploaded any audio poems yet</p>
+                  <Button className="mt-6 btn-gradient" asChild>
+                    <Link to="/audio-library/create">Upload Audio</Link>
+                  </Button>
+                </motion.div>
+              )}
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </motion.div>
   );
 }
