@@ -1,7 +1,11 @@
+
 import { Post } from "@/components/Post";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { PenSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface PostType {
   id: string;
@@ -68,31 +72,75 @@ export const ProfilePosts = ({ posts, username, profilePicUrl }: ProfilePostsPro
     },
   });
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24
+      }
+    }
+  };
+
   if (posts.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500">
-        No posts yet
-      </div>
+      <motion.div 
+        className="glass-card p-12 text-center mt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <PenSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-xl font-medium text-gray-600 mb-2">No posts yet</h3>
+        <p className="text-gray-500 mb-6">Share your first post with the world</p>
+        
+        <Button className="btn-gradient" asChild>
+          <Link to="/create-post">Create a Post</Link>
+        </Button>
+      </motion.div>
     );
   }
 
   return (
-    <div className="w-full max-w-[600px] mx-auto mt-8">
+    <motion.div 
+      className="w-full max-w-[600px] mx-auto mt-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       <div className="space-y-6">
-        {(postsWithLikes || posts).map((post: PostType | PostWithCounts) => (
-          <Post
-            key={post.id}
-            postId={post.id}
-            username={username}
-            content={post.content_text || post.caption || ""}
-            timestamp={new Date(post.created_at).toLocaleDateString()}
-            imageUrl={post.image_url || undefined}
-            likes={'likes' in post ? post.likes : 0}
-            comments={'comments' in post ? post.comments : 0}
-            profilePicUrl={profilePicUrl}
-          />
+        {(postsWithLikes || posts).map((post: PostType | PostWithCounts, index) => (
+          <motion.div 
+            key={post.id} 
+            variants={itemVariants}
+            className="transform-preserve-3d perspective-1000 hover-scale"
+          >
+            <Post
+              postId={post.id}
+              username={username}
+              content={post.content_text || post.caption || ""}
+              timestamp={new Date(post.created_at).toLocaleDateString()}
+              imageUrl={post.image_url || undefined}
+              likes={'likes' in post ? post.likes : 0}
+              comments={'comments' in post ? post.comments : 0}
+              profilePicUrl={profilePicUrl}
+            />
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };

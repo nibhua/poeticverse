@@ -5,18 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Search, Headphones, Play, Pause, Plus, Volume2, Clock, User } from "lucide-react";
+import { Search, Headphones, Play, Pause, Plus, Volume2, Clock, User, SkipBack, SkipForward, Volume, VolumeX } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Slider } from "@/components/ui/slider";
 
 export default function AudioLibrary() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentAudio, setCurrentAudio] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.8);
+  const [isMuted, setIsMuted] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { toast } = useToast();
+  const animationRef = useRef<number>();
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -45,11 +51,7 @@ export default function AudioLibrary() {
       
       if (error) {
         console.error("Error fetching audio poems:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch audio poems",
-          variant: "destructive",
-        });
+        toast.error("Failed to fetch audio poems");
         throw error;
       }
       console.log("Fetched audio poems:", data);
@@ -57,39 +59,133 @@ export default function AudioLibrary() {
     },
   });
 
+  // Set up audio listeners
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const setAudioData = () => {
+      setDuration(audio.duration);
+      setCurrentTime(audio.currentTime);
+    };
+
+    const setAudioTime = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleAudioEnd = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+      cancelAnimationFrame(animationRef.current!);
+    };
+
+    audio.addEventListener('loadeddata', setAudioData);
+    audio.addEventListener('timeupdate', setAudioTime);
+    audio.addEventListener('ended', handleAudioEnd);
+
+    return () => {
+      if (audio) {
+        audio.removeEventListener('loadeddata', setAudioData);
+        audio.removeEventListener('timeupdate', setAudioTime);
+        audio.removeEventListener('ended', handleAudioEnd);
+      }
+      cancelAnimationFrame(animationRef.current!);
+    };
+  }, [audioRef.current]);
+
+  // Control volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+    }
+  }, [volume, isMuted]);
+
+  const whilePlaying = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+      animationRef.current = requestAnimationFrame(whilePlaying);
+    }
+  };
+
   const togglePlay = (audioUrl: string, poemId: string) => {
     if (currentAudio === poemId) {
       if (isPlaying) {
         audioRef.current?.pause();
         setIsPlaying(false);
+        cancelAnimationFrame(animationRef.current!);
       } else {
         audioRef.current?.play();
         setIsPlaying(true);
+        animationRef.current = requestAnimationFrame(whilePlaying);
       }
     } else {
       if (audioRef.current) {
         audioRef.current.pause();
+        cancelAnimationFrame(animationRef.current!);
       }
       setCurrentAudio(poemId);
       audioRef.current = new Audio(audioUrl);
-      audioRef.current.play();
-      setIsPlaying(true);
-      
-      // Only increment play count for other users' audio
-      const poem = audioPoems?.find(p => p.id === poemId);
-      if (poem && poem.user_id !== currentUserId) {
-        incrementPlayCount(poemId);
-      }
+      audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+        animationRef.current = requestAnimationFrame(whilePlaying);
+        
+        // Only increment play count for other users' audio
+        const poem = audioPoems?.find(p => p.id === poemId);
+        if (poem && poem.user_id !== currentUserId) {
+          incrementPlayCount(poemId);
+        }
+      }).catch(error => {
+        console.error("Error playing audio:", error);
+        toast.error("Failed to play audio");
+      });
     }
   };
 
   const incrementPlayCount = async (poemId: string) => {
     try {
-      await supabase.rpc('increment_audio_impression', {
-        poem_id: poemId
-      });
+      // Using UPDATE directly since the RPC doesn't exist
+      const { error } = await supabase
+        .from('audio_poems')
+        .update({ impression_count: audioPoems?.find(p => p.id === poemId)?.impression_count + 1 || 1 })
+        .eq('id', poemId);
+
+      if (error) console.error("Error incrementing play count:", error);
     } catch (error) {
       console.error("Error incrementing play count:", error);
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
+  const skipForward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 10, audioRef.current.duration);
+    }
+  };
+
+  const skipBackward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 10, 0);
+    }
+  };
+
+  const changeRange = (values: number[]) => {
+    if (audioRef.current && duration) {
+      audioRef.current.currentTime = values[0] * duration;
+      setCurrentTime(values[0] * duration);
+    }
+  };
+
+  const changeVolume = (values: number[]) => {
+    const newVolume = values[0];
+    setVolume(newVolume);
+    if (newVolume === 0) {
+      setIsMuted(true);
+    } else if (isMuted) {
+      setIsMuted(false);
     }
   };
 
@@ -100,6 +196,12 @@ export default function AudioLibrary() {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const VolumeIcon = () => {
+    if (isMuted) return <VolumeX className="h-5 w-5" />;
+    if (volume > 0.5) return <Volume2 className="h-5 w-5" />;
+    return <Volume className="h-5 w-5" />;
   };
 
   const containerVariants = {
@@ -135,6 +237,9 @@ export default function AudioLibrary() {
       </div>
     );
   }
+
+  // Current playing audio details
+  const currentPlayingPoem = audioPoems?.find(poem => poem.id === currentAudio);
 
   return (
     <motion.div 
@@ -193,6 +298,98 @@ export default function AudioLibrary() {
         />
       </motion.div>
 
+      {/* Audio Player Controls */}
+      {currentPlayingPoem && (
+        <motion.div 
+          className="glass-card p-4 rounded-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                <Headphones className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium">{currentPlayingPoem.title}</h3>
+                <p className="text-sm text-gray-500">{currentPlayingPoem.user?.username || 'Anonymous'}</p>
+              </div>
+            </div>
+            <div className="space-x-2">
+              <span className="text-sm text-gray-500">
+                {formatDuration(currentTime)} / {formatDuration(duration || 0)}
+              </span>
+            </div>
+          </div>
+          
+          <Slider
+            value={[duration ? currentTime / duration : 0]}
+            max={1}
+            step={0.01}
+            onValueChange={changeRange}
+            className="mb-4"
+          />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={skipBackward}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <SkipBack className="h-5 w-5" />
+              </button>
+              
+              <button 
+                onClick={() => togglePlay(currentPlayingPoem.audio_url, currentPlayingPoem.id)}
+                className="p-3 bg-primary text-white rounded-full hover:opacity-90 transition-opacity"
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
+              
+              <button 
+                onClick={skipForward}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <SkipForward className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowVolumeSlider(!showVolumeSlider)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                onMouseEnter={() => setShowVolumeSlider(true)}
+              >
+                <VolumeIcon />
+              </button>
+              
+              {showVolumeSlider && (
+                <div 
+                  className="absolute -left-20 bottom-full mb-2 bg-white rounded-lg shadow-lg p-3 min-w-28"
+                  onMouseLeave={() => setShowVolumeSlider(false)}
+                >
+                  <button 
+                    onClick={toggleMute}
+                    className="p-1 hover:bg-gray-100 rounded-full mb-2 mx-auto block"
+                  >
+                    <VolumeIcon />
+                  </button>
+                  <Slider
+                    orientation="vertical"
+                    value={[isMuted ? 0 : volume]}
+                    max={1}
+                    step={0.01}
+                    onValueChange={changeVolume}
+                    className="h-24"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div variants={itemVariants}>
         <Tabs defaultValue="explore" className="w-full">
           <TabsList className="w-full">
@@ -248,7 +445,12 @@ export default function AudioLibrary() {
                       <p className="mt-3 text-gray-600">{poem.description}</p>
                     )}
                     <div className="mt-4 h-[2px] bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: currentAudio === poem.id ? '30%' : '0%' }}></div>
+                      <div 
+                        className="h-full bg-primary" 
+                        style={{ 
+                          width: currentAudio === poem.id ? `${(currentTime / duration) * 100}%` : '0%' 
+                        }}
+                      ></div>
                     </div>
                   </div>
                 </motion.div>
@@ -322,7 +524,12 @@ export default function AudioLibrary() {
                       <p className="mt-3 text-gray-600">{poem.description}</p>
                     )}
                     <div className="mt-4 h-[2px] bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: currentAudio === poem.id ? '30%' : '0%' }}></div>
+                      <div 
+                        className="h-full bg-primary" 
+                        style={{ 
+                          width: currentAudio === poem.id ? `${(currentTime / duration) * 100}%` : '0%' 
+                        }}
+                      ></div>
                     </div>
                   </div>
                 </motion.div>

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfilePosts } from "@/components/profile/ProfilePosts";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { UserRound } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -129,27 +132,41 @@ const Profile = () => {
     checkCurrentUser();
   }, [profile]);
 
-  if (profileLoading) {
+  if (profileLoading || postsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="relative w-20 h-20">
+          <div className="absolute inset-0 rounded-full border-t-4 border-primary animate-spin"></div>
+          <UserRound className="absolute inset-0 m-auto h-10 w-10 text-primary/50" />
+        </div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <motion.div 
+        className="flex items-center justify-center min-h-[70vh] glass-card p-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="text-center">
-          <h2 className="text-xl font-semibold">Profile not found</h2>
+          <UserRound className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Profile not found</h2>
           <p className="text-gray-500">The requested profile does not exist.</p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8">
+    <motion.div 
+      className="container mx-auto px-4 py-6 sm:py-8 space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <ProfileHeader
         username={profile.username}
         fullName={profile.full_name}
@@ -166,7 +183,7 @@ const Profile = () => {
         username={profile.username}
         profilePicUrl={profile.profile_pic_url}
       />
-    </div>
+    </motion.div>
   );
 };
 

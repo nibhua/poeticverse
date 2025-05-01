@@ -77,8 +77,6 @@ export function Navbar() {
         { path: "/workshops", label: "Workshops" },
         { path: "/competitions", label: "Competitions" },
         { path: "/challenges", label: "Challenges" },
-        { path: "/privacy-policy", label: "Privacy Policy" },
-        { path: "/contact", label: "Contact" },
         { path: username ? `/profile/${username}` : "/login", label: "Profile" },
     ];
     
@@ -93,7 +91,7 @@ export function Navbar() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
             <div className="flex items-center justify-between h-full px-2 mx-auto w-full">
-                <Link to={user ? "/" : "/login"} className="flex items-center h-full p-0 m-0">
+                <Link to={user ? "/" : "/login"} className="flex items-center h-full p-0 m-0 ml-0">
                     <motion.img 
                         src="/logo1.png" 
                         alt="Poeticverse Logo" 
@@ -111,56 +109,58 @@ export function Navbar() {
                     </motion.h1>
                 </Link>
                 
-                {isMobile && (
-                    <button 
-                        className="p-1.5 rounded-md hover:bg-gray-100 transition-colors z-50"
-                        onClick={toggleMobileMenu}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? (
-                            <X className="h-5 w-5 text-gray-600" />
-                        ) : (
-                            <Menu className="h-5 w-5 text-gray-600" />
-                        )}
-                    </button>
-                )}
+                <div className="flex items-center">
+                    {/* Desktop navigation - scrollable container */}
+                    <div className="hidden md:block overflow-x-auto flex-1 scrollbar-hide">
+                        <motion.nav 
+                            className="flex items-center space-x-1 pr-2 justify-end"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            {menuItems.map((item) => (
+                                <Link 
+                                    key={item.path} 
+                                    to={item.path}
+                                    className={`relative px-3 py-1 text-sm whitespace-nowrap font-medium transition-colors
+                                        ${location.pathname === item.path ? 
+                                        "text-primary" : "text-gray-600 hover:text-gray-900"}`}
+                                >
+                                    {item.label}
+                                    {location.pathname === item.path && (
+                                        <motion.span 
+                                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
+                                            layoutId="navbar-indicator"
+                                        />
+                                    )}
+                                </Link>
+                            ))}
+                            
+                            {user && (
+                                <button 
+                                    onClick={handleSignOut}
+                                    className="relative px-3 py-1 text-sm whitespace-nowrap font-medium text-gray-600 hover:text-gray-900 flex items-center"
+                                >
+                                    <LogOut className="h-4 w-4 mr-1" />
+                                    Sign Out
+                                </button>
+                            )}
+                        </motion.nav>
+                    </div>
 
-                {/* Desktop navigation - scrollable container */}
-                <div className="hidden md:block overflow-x-auto flex-1 ml-4 scrollbar-hide">
-                    <motion.nav 
-                        className="flex items-center space-x-1 pr-2 justify-start"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                    >
-                        {menuItems.map((item) => (
-                            <Link 
-                                key={item.path} 
-                                to={item.path}
-                                className={`relative px-3 py-1 text-sm whitespace-nowrap font-medium transition-colors
-                                    ${location.pathname === item.path ? 
-                                    "text-primary" : "text-gray-600 hover:text-gray-900"}`}
-                            >
-                                {item.label}
-                                {location.pathname === item.path && (
-                                    <motion.span 
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                                        layoutId="navbar-indicator"
-                                    />
-                                )}
-                            </Link>
-                        ))}
-                        
-                        {user && (
-                            <button 
-                                onClick={handleSignOut}
-                                className="relative px-3 py-1 text-sm whitespace-nowrap font-medium text-gray-600 hover:text-gray-900 flex items-center"
-                            >
-                                <LogOut className="h-4 w-4 mr-1" />
-                                Sign Out
-                            </button>
-                        )}
-                    </motion.nav>
+                    {isMobile && (
+                        <button 
+                            className="p-1.5 rounded-md hover:bg-gray-100 transition-colors z-50"
+                            onClick={toggleMobileMenu}
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? (
+                                <X className="h-5 w-5 text-gray-600" />
+                            ) : (
+                                <Menu className="h-5 w-5 text-gray-600" />
+                            )}
+                        </button>
+                    )}
                 </div>
 
                 {/* Mobile navigation */}
