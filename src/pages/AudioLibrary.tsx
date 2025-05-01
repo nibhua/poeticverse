@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,6 +188,62 @@ export default function AudioLibrary() {
     }
   };
 
+  const VolumeControl = () => {
+    return (
+      <div className="relative">
+        <button 
+          onClick={toggleMute}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          onMouseEnter={() => setShowVolumeSlider(true)}
+        >
+          {isMuted ? <VolumeX className="h-5 w-5" /> : 
+           volume > 0.5 ? <Volume2 className="h-5 w-5" /> : 
+           <Volume className="h-5 w-5" />}
+        </button>
+        
+        {showVolumeSlider && (
+          <div 
+            className="absolute -left-20 bottom-full mb-2 bg-white rounded-lg shadow-lg p-4 min-w-28"
+            onMouseLeave={() => setShowVolumeSlider(false)}
+          >
+            <button 
+              onClick={toggleMute}
+              className="p-1 hover:bg-gray-100 rounded-full mb-2 mx-auto block"
+            >
+              {isMuted ? <VolumeX className="h-5 w-5" /> : 
+               volume > 0.5 ? <Volume2 className="h-5 w-5" /> : 
+               <Volume className="h-5 w-5" />}
+            </button>
+            
+            <div className="h-24 flex items-center justify-center py-2 px-4 bg-gray-50 rounded-lg">
+              <div className="relative w-full h-full flex items-center justify-center">
+                <div className="absolute h-full w-1.5 bg-gray-200 rounded-full">
+                  <div 
+                    className="w-full bg-primary rounded-full absolute bottom-0"
+                    style={{ height: `${(isMuted ? 0 : volume) * 100}%` }}
+                  ></div>
+                </div>
+                
+                <Slider
+                  orientation="vertical"
+                  value={[isMuted ? 0 : volume]}
+                  max={1}
+                  step={0.01}
+                  onValueChange={changeVolume}
+                  className="h-full"
+                />
+              </div>
+            </div>
+            
+            <div className="text-center mt-2 text-xs text-gray-500">
+              Volume: {Math.round((isMuted ? 0 : volume) * 100)}%
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const explorePoems = audioPoems?.filter(poem => poem.user_id !== currentUserId) || [];
   const myPoems = audioPoems?.filter(poem => poem.user_id === currentUserId) || [];
 
@@ -196,12 +251,6 @@ export default function AudioLibrary() {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const VolumeIcon = () => {
-    if (isMuted) return <VolumeX className="h-5 w-5" />;
-    if (volume > 0.5) return <Volume2 className="h-5 w-5" />;
-    return <Volume className="h-5 w-5" />;
   };
 
   const containerVariants = {
@@ -355,37 +404,7 @@ export default function AudioLibrary() {
               </button>
             </div>
             
-            <div className="relative">
-              <button 
-                onClick={() => setShowVolumeSlider(!showVolumeSlider)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                onMouseEnter={() => setShowVolumeSlider(true)}
-              >
-                <VolumeIcon />
-              </button>
-              
-              {showVolumeSlider && (
-                <div 
-                  className="absolute -left-20 bottom-full mb-2 bg-white rounded-lg shadow-lg p-3 min-w-28"
-                  onMouseLeave={() => setShowVolumeSlider(false)}
-                >
-                  <button 
-                    onClick={toggleMute}
-                    className="p-1 hover:bg-gray-100 rounded-full mb-2 mx-auto block"
-                  >
-                    <VolumeIcon />
-                  </button>
-                  <Slider
-                    orientation="vertical"
-                    value={[isMuted ? 0 : volume]}
-                    max={1}
-                    step={0.01}
-                    onValueChange={changeVolume}
-                    className="h-24"
-                  />
-                </div>
-              )}
-            </div>
+            <VolumeControl />
           </div>
         </motion.div>
       )}

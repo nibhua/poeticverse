@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,18 +8,33 @@ interface FollowButtonProps {
   userId: string;
   initialFollowersCount: number;
   onFollowersCountChange: (count: number) => void;
+  isCurrentUser?: boolean;
 }
 
-export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountChange }: FollowButtonProps) => {
+export const FollowButton = ({ 
+  userId, 
+  initialFollowersCount, 
+  onFollowersCountChange,
+  isCurrentUser = false
+}: FollowButtonProps) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(initialFollowersCount);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkFollowStatus = async () => {
+    const checkAuthAndFollowStatus = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        
+        setCurrentUserId(user.id);
+        
+        // Don't check follow status if it's the current user's profile
+        if (user.id === userId) {
+          setIsCurrentUser(true);
+          return;
+        }
 
         const { data, error } = await supabase
           .from("followers")
@@ -34,10 +50,21 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
       }
     };
 
-    checkFollowStatus();
+    checkAuthAndFollowStatus();
   }, [userId]);
 
+  // Update follower count whenever it changes
+  useEffect(() => {
+    setFollowerCount(initialFollowersCount);
+  }, [initialFollowersCount]);
+
   const handleFollowToggle = async () => {
+    // Prevent following yourself
+    if (isCurrentUser || userId === currentUserId) {
+      toast.error("You cannot follow yourself");
+      return;
+    }
+    
     try {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -88,6 +115,11 @@ export const FollowButton = ({ userId, initialFollowersCount, onFollowersCountCh
       setIsLoading(false);
     }
   };
+
+  // Don't render the button if it's the current user
+  if (isCurrentUser || userId === currentUserId) {
+    return null;
+  }
 
   return (
     <Button

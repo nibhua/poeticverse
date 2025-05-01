@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -18,15 +19,28 @@ interface FollowListProps {
   title: string;
   userId: string;
   type: "followers" | "following";
+  isCurrentUser?: boolean;
 }
 
-export const FollowList = ({ isOpen, onClose, title, userId, type }: FollowListProps) => {
+export const FollowList = ({ isOpen, onClose, title, userId, type, isCurrentUser = false }: FollowListProps) => {
   const [users, setUsers] = useState<Array<{
     id: string;
     username: string;
     profile_pic_url: string | null;
   }>>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Get current user ID
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setCurrentUserId(data.user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -43,7 +57,11 @@ export const FollowList = ({ isOpen, onClose, title, userId, type }: FollowListP
           .eq('followed_id', userId);
 
         if (error) throw error;
-        setUsers(data?.map(item => item.follower_profile) || []);
+        const uniqueUsers = Array.from(
+          new Map(data?.map(item => [item.follower_profile.id, item.follower_profile]) || [])
+            .values()
+        );
+        setUsers(uniqueUsers);
       } else {
         const { data, error } = await supabase
           .from('followers')
@@ -57,7 +75,11 @@ export const FollowList = ({ isOpen, onClose, title, userId, type }: FollowListP
           .eq('follower_id', userId);
 
         if (error) throw error;
-        setUsers(data?.map(item => item.followed_profile) || []);
+        const uniqueUsers = Array.from(
+          new Map(data?.map(item => [item.followed_profile.id, item.followed_profile]) || [])
+            .values()
+        );
+        setUsers(uniqueUsers);
       }
     } catch (error) {
       console.error(`Error fetching ${type}:`, error);
@@ -95,11 +117,14 @@ export const FollowList = ({ isOpen, onClose, title, userId, type }: FollowListP
                 </Avatar>
                 <span className="font-medium">{user.username}</span>
               </div>
-              <FollowButton 
-                userId={user.id}
-                initialFollowersCount={0}
-                onFollowersCountChange={() => {}}
-              />
+              {user.id !== currentUserId && (
+                <FollowButton 
+                  userId={user.id}
+                  initialFollowersCount={0}
+                  onFollowersCountChange={() => {}}
+                  isCurrentUser={user.id === currentUserId}
+                />
+              )}
             </div>
           ))}
           {users.length === 0 && (

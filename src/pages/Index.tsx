@@ -1,12 +1,12 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Heart, MessageCircle, Share2, MoreHorizontal, Image as ImageIcon, UserRound, Send } from "lucide-react";
+import { Clock, Send, UserRound } from "lucide-react";
+import { Post } from "@/components/Post";
 
 export default function Index() {
   const [selectedTab, setSelectedTab] = useState<"following" | "discover">("following");
@@ -24,7 +24,34 @@ export default function Index() {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+
+      // Get likes and comments counts
+      const postIds = data.map(p => p.id);
+      const { data: likes } = await supabase
+        .from('likes')
+        .select('post_id')
+        .in('post_id', postIds);
+
+      const { data: comments } = await supabase
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds);
+
+      const likesCount = (likes || []).reduce((acc: Record<string, number>, curr: any) => {
+        acc[curr.post_id] = (acc[curr.post_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      const commentsCount = (comments || []).reduce((acc: Record<string, number>, curr: any) => {
+        acc[curr.post_id] = (acc[curr.post_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      return data.map(post => ({
+        ...post,
+        likes: likesCount[post.id] || 0,
+        comments: commentsCount[post.id] || 0,
+      }));
     }
   });
 
@@ -214,69 +241,21 @@ export default function Index() {
               className="card-3d group perspective-1000"
               variants={itemVariants}
             >
-              <div className="glass-card p-4 transform-preserve-3d">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={post.profiles?.profile_pic_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {post.profiles?.username ? post.profiles.username[0].toUpperCase() : "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <Link to={`/profile/${post.profiles?.username}`} className="font-medium hover:text-primary transition-colors duration-200">
-                        {post.profiles?.username}
-                      </Link>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {new Date(post.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="text-gray-500 hover:text-gray-700 transition-colors">
-                    <MoreHorizontal className="h-5 w-5" />
-                  </button>
-                </div>
-                
-                <div className="mt-3">
-                  {post.content_type === "text" && post.content_text && (
-                    <p className="text-gray-800 whitespace-pre-wrap">{post.content_text}</p>
-                  )}
-                  
-                  {post.content_type === "image" && post.image_url && (
-                    <div className="space-y-3">
-                      {post.caption && <p className="text-gray-800">{post.caption}</p>}
-                      <div className="rounded-xl overflow-hidden bg-gray-100 mt-2">
-                        <img 
-                          src={post.image_url} 
-                          alt="Post" 
-                          className="w-full h-auto object-cover" 
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex space-x-4">
-                    <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors">
-                      <Heart className="h-5 w-5" />
-                      <span className="text-sm">0</span>
-                    </button>
-                    <button className="flex items-center space-x-1 text-gray-500 hover:text-primary transition-colors">
-                      <MessageCircle className="h-5 w-5" />
-                      <span className="text-sm">0</span>
-                    </button>
-                    <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors">
-                      <Share2 className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <Post 
+                postId={post.id}
+                username={post.profiles?.username || "Unknown"}
+                content={post.content_text || post.caption || ""}
+                timestamp={new Date(post.created_at).toLocaleDateString()}
+                imageUrl={post.image_url || undefined}
+                likes={post.likes || 0}
+                comments={post.comments || 0}
+                profilePicUrl={post.profiles?.profile_pic_url || undefined}
+                userId={post.user_id}
+              />
             </motion.div>
           ))}
         </motion.div>
       )}
     </div>
   );
-}
+};

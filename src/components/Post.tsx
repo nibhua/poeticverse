@@ -17,6 +17,7 @@ interface PostProps {
   imageUrl?: string;
   postId: string;
   profilePicUrl?: string;
+  userId?: string;
 }
 
 export const Post = ({ 
@@ -26,7 +27,8 @@ export const Post = ({
   likes: initialLikes, 
   imageUrl,
   postId,
-  profilePicUrl
+  profilePicUrl,
+  userId
 }: PostProps) => {
   const [showComments, setShowComments] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -38,7 +40,8 @@ export const Post = ({
     checkIfLiked,
     fetchComments,
     handleLike,
-    handleComment
+    handleComment,
+    isLoadingActions
   } = usePostActions(postId);
 
   useEffect(() => {
@@ -74,6 +77,7 @@ export const Post = ({
           onLike={handleLike}
           onComment={() => setShowComments(!showComments)}
           onShare={() => setShowShareDialog(true)}
+          isLoading={isLoadingActions}
         />
       </div>
       

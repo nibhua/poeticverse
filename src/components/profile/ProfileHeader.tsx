@@ -96,6 +96,7 @@ export const ProfileHeader = ({
                   userId={userId} 
                   initialFollowersCount={followersCount}
                   onFollowersCountChange={setCurrentFollowersCount}
+                  isCurrentUser={isCurrentUser}
                 />
               )}
             </motion.div>
@@ -147,6 +148,7 @@ export const ProfileHeader = ({
         title="Followers"
         userId={userId}
         type="followers"
+        isCurrentUser={isCurrentUser}
       />
 
       <FollowList
@@ -155,6 +157,7 @@ export const ProfileHeader = ({
         title="Following"
         userId={userId}
         type="following"
+        isCurrentUser={isCurrentUser}
       />
     </motion.div>
   );
