@@ -21,6 +21,7 @@ export const FollowButton = ({
   const [followerCount, setFollowerCount] = useState(initialFollowersCount);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isUserSelf, setIsUserSelf] = useState(isCurrentUser);
 
   useEffect(() => {
     const checkAuthAndFollowStatus = async () => {
@@ -32,7 +33,7 @@ export const FollowButton = ({
         
         // Don't check follow status if it's the current user's profile
         if (user.id === userId) {
-          setIsCurrentUser(true);
+          setIsUserSelf(true);
           return;
         }
 
@@ -60,7 +61,7 @@ export const FollowButton = ({
 
   const handleFollowToggle = async () => {
     // Prevent following yourself
-    if (isCurrentUser || userId === currentUserId) {
+    if (isUserSelf || userId === currentUserId) {
       toast.error("You cannot follow yourself");
       return;
     }
@@ -117,7 +118,7 @@ export const FollowButton = ({
   };
 
   // Don't render the button if it's the current user
-  if (isCurrentUser || userId === currentUserId) {
+  if (isUserSelf || userId === currentUserId) {
     return null;
   }
 

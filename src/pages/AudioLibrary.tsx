@@ -188,6 +188,7 @@ export default function AudioLibrary() {
     }
   };
 
+  // Improved volume control component with horizontal slider
   const VolumeControl = () => {
     return (
       <div className="relative">
@@ -203,40 +204,31 @@ export default function AudioLibrary() {
         
         {showVolumeSlider && (
           <div 
-            className="absolute -left-20 bottom-full mb-2 bg-white rounded-lg shadow-lg p-4 min-w-28"
+            className="absolute right-0 bottom-full mb-2 bg-white rounded-lg shadow-lg p-4 min-w-48 z-50"
             onMouseLeave={() => setShowVolumeSlider(false)}
           >
-            <button 
-              onClick={toggleMute}
-              className="p-1 hover:bg-gray-100 rounded-full mb-2 mx-auto block"
-            >
-              {isMuted ? <VolumeX className="h-5 w-5" /> : 
-               volume > 0.5 ? <Volume2 className="h-5 w-5" /> : 
-               <Volume className="h-5 w-5" />}
-            </button>
-            
-            <div className="h-24 flex items-center justify-center py-2 px-4 bg-gray-50 rounded-lg">
-              <div className="relative w-full h-full flex items-center justify-center">
-                <div className="absolute h-full w-1.5 bg-gray-200 rounded-full">
-                  <div 
-                    className="w-full bg-primary rounded-full absolute bottom-0"
-                    style={{ height: `${(isMuted ? 0 : volume) * 100}%` }}
-                  ></div>
-                </div>
-                
-                <Slider
-                  orientation="vertical"
-                  value={[isMuted ? 0 : volume]}
-                  max={1}
-                  step={0.01}
-                  onValueChange={changeVolume}
-                  className="h-full"
-                />
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <button 
+                onClick={toggleMute}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                {isMuted ? <VolumeX className="h-5 w-5" /> : 
+                 volume > 0.5 ? <Volume2 className="h-5 w-5" /> : 
+                 <Volume className="h-5 w-5" />}
+              </button>
+              
+              <span className="text-sm text-gray-500 font-medium">
+                {Math.round((isMuted ? 0 : volume) * 100)}%
+              </span>
             </div>
             
-            <div className="text-center mt-2 text-xs text-gray-500">
-              Volume: {Math.round((isMuted ? 0 : volume) * 100)}%
+            <div className="w-full py-2">
+              <Slider
+                value={[isMuted ? 0 : volume]}
+                max={1}
+                step={0.01}
+                onValueChange={changeVolume}
+              />
             </div>
           </div>
         )}
@@ -292,7 +284,7 @@ export default function AudioLibrary() {
 
   return (
     <motion.div 
-      className="space-y-6"
+      className="space-y-6 max-w-full overflow-x-hidden"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -338,7 +330,7 @@ export default function AudioLibrary() {
         className="relative z-10 group"
         variants={itemVariants}
       >
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors duration-200" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors duration-200 pointer-events-none" />
         <Input
           placeholder="Search poems by title or description..."
           className="search-modern w-full pl-12"

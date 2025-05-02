@@ -50,12 +50,19 @@ export const Post = ({
     fetchComments();
   }, [postId, initialLikes, checkIfLiked, fetchComments, setLikes]);
 
+  const toggleComments = () => {
+    setShowComments(!showComments);
+    if (!showComments) {
+      fetchComments();
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="glass-card overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="glass-card overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full mx-auto"
     >
       <PostHeader 
         username={username} 
@@ -75,7 +82,7 @@ export const Post = ({
           likes={likes}
           comments={postComments.length}
           onLike={handleLike}
-          onComment={() => setShowComments(!showComments)}
+          onComment={toggleComments}
           onShare={() => setShowShareDialog(true)}
           isLoading={isLoadingActions}
         />

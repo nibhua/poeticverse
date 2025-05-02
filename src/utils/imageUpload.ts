@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -30,7 +31,10 @@ export const uploadImage = async (
 
     const { error: uploadError, data } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
     if (uploadError) throw uploadError;
 
