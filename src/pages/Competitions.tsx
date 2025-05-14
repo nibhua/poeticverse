@@ -11,16 +11,34 @@ import { motion } from "framer-motion";
 export default function Competitions() {
   const [searchTerm, setSearchTerm] = useState("");
   const searchRef = useRef<HTMLDivElement>(null);
+  
+  // Modified to include counts
   const { data: competitions, isLoading } = useQuery({
     queryKey: ["competitions"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: competitionsData, error: competitionsError } = await supabase
         .from("competitions")
         .select("*")
         .order("start_date", { ascending: true });
       
-      if (error) throw error;
-      return data;
+      if (competitionsError) throw competitionsError;
+      
+      // Get entry counts for each competition
+      const competitionsWithEntryCounts = await Promise.all(
+        competitionsData.map(async (competition) => {
+          const { count, error: countError } = await supabase
+            .from("competition_entries")
+            .select("*", { count: true, head: true })
+            .eq("competition_id", competition.id);
+          
+          return {
+            ...competition,
+            entry_count: count || 0
+          };
+        })
+      );
+      
+      return competitionsWithEntryCounts;
     },
   });
 
@@ -174,7 +192,7 @@ export default function Competitions() {
                         
                         <div className="flex items-center text-sm text-gray-600">
                           <Users className="h-4 w-4 mr-1 text-primary/70" />
-                          <span>0 entries</span>
+                          <span>{competition.entry_count || 0} entries</span>
                         </div>
                       </div>
                     </div>

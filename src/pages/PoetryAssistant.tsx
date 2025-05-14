@@ -1,240 +1,162 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, Send, Copy, Download } from "lucide-react";
-import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Send, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const poetryStyles = [
-  "Sonnet", "Haiku", "Free verse", "Limerick", "Ballad",
-  "Ghazal", "Ode", "Villanelle", "Epic", "Prose poetry",
-  "Acrostic", "Narrative", "Elegy", "Blank verse", "Concrete"
-];
-
-const poetryThemes = [
-  "Love", "Nature", "Loss", "Hope", "Friendship",
-  "Courage", "Time", "War", "Peace", "Dreams",
-  "Mystery", "Journey", "Identity", "Freedom", "Change"
-];
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export default function PoetryAssistant() {
   const [prompt, setPrompt] = useState("");
-  const [style, setStyle] = useState("");
-  const [theme, setTheme] = useState("");
-  const [length, setLength] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [poetry, setPoetry] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content: "Hello! I'm your poetry assistant. I can help you write, improve, or generate poetry. What would you like to create today?",
+    },
+  ]);
   const { toast } = useToast();
 
-  const handleGeneratePoetry = async () => {
-    if (!prompt.trim()) {
-      toast({
-        title: "Input required",
-        description: "Please enter a prompt for your poem",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGenerating(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!prompt.trim()) return;
+    
+    const userMessage: Message = { role: "user", content: prompt };
+    setMessages((prev) => [...prev, userMessage]);
+    setPrompt("");
+    setIsLoading(true);
+    
     try {
-      const { data, error } = await supabase.functions.invoke("generate-poetry", {
-        body: { prompt, style, theme, length },
+      // Prepare the context with poetry focus
+      const messageHistory = messages.map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.content }]
+      }));
+      
+      // Add the user's latest message
+      messageHistory.push({
+        role: "user",
+        parts: [{ text: prompt }]
       });
+      
+      // Set up the request for Gemini API
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBQBABdgWaSX8qqjO9Tc0qcySppaePgu4s",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: messageHistory,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 800,
+            },
+          }),
+        }
+      );
 
-      if (error) throw error;
-      setPoetry(data.poetry);
-    } catch (error) {
-      console.error("Error generating poetry:", error);
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error.message || "Failed to generate response");
+      }
+      
+      const assistantResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+        "Sorry, I couldn't generate a response at this time.";
+      
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: assistantResponse,
+      };
+      
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
       toast({
-        title: "Generation failed",
-        description: "Failed to generate poetry. Please try again.",
+        title: "Error",
+        description: error.message || "Failed to generate poetry. Please try again.",
         variant: "destructive",
       });
+      console.error("Poetry generation error:", error);
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(poetry);
-    toast({
-      title: "Copied",
-      description: "Poetry copied to clipboard",
-    });
-  };
-
-  const handleDownload = () => {
-    const element = document.createElement("a");
-    const file = new Blob([poetry], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = "generated-poem.txt";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8 text-center"
-      >
-        <h1 className="text-3xl md:text-4xl font-bold text-gradient-subtle">Poetry Assistant</h1>
-        <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
-          Get inspired with AI-generated poetry based on your prompts, themes, and styles
-        </p>
-      </motion.div>
-
-      <div className="grid md:grid-cols-2 gap-8">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Create Your Poem</CardTitle>
-              <CardDescription>
-                Provide details for your AI-generated poem
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="prompt" className="text-sm font-medium mb-1 block">
-                  What would you like a poem about?
-                </label>
-                <Textarea
-                  id="prompt"
-                  placeholder="Enter your poetry prompt here..."
-                  className="resize-none min-h-[100px]"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="style" className="text-sm font-medium mb-1 block">
-                    Poetry Style
-                  </label>
-                  <Select value={style} onValueChange={setStyle}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Any style</SelectItem>
-                      {poetryStyles.map((style) => (
-                        <SelectItem key={style} value={style}>
-                          {style}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label htmlFor="theme" className="text-sm font-medium mb-1 block">
-                    Theme
-                  </label>
-                  <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Any theme</SelectItem>
-                      {poetryThemes.map((theme) => (
-                        <SelectItem key={theme} value={theme}>
-                          {theme}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="length" className="text-sm font-medium mb-1 block">
-                  Length (number of lines)
-                </label>
-                <Input
-                  id="length"
-                  type="number"
-                  min="1"
-                  max="50"
-                  placeholder="Any length"
-                  value={length}
-                  onChange={(e) => setLength(e.target.value)}
-                />
-              </div>
-
-              <Button 
-                className="w-full"
-                onClick={handleGeneratePoetry}
-                disabled={isGenerating}
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gradient-subtle">Poetry Assistant</h1>
+        <p className="text-gray-600">Get help with writing, improving, or generating poetry</p>
+      </div>
+      
+      <div className="flex flex-col h-[60vh]">
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/50 rounded-t-lg space-y-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.role === "assistant" ? "justify-start" : "justify-end"
+              }`}
+            >
+              <div
+                className={`max-w-[80%] p-3 rounded-lg ${
+                  message.role === "assistant"
+                    ? "bg-white dark:bg-gray-800 border shadow-sm"
+                    : "bg-primary text-primary-foreground"
+                }`}
               >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate Poem
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Your Generated Poem</CardTitle>
-              <CardDescription>
-                AI-crafted poetry based on your input
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {poetry ? (
-                <>
-                  <div className="bg-muted p-4 rounded-md overflow-auto h-[300px] whitespace-pre-line">
-                    {poetry}
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCopy}>
-                      <Copy className="h-4 w-4 mr-1" /> Copy
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-1" /> Download
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[300px] text-center bg-muted/40 rounded-md p-6">
-                  <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No poem generated yet</h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Fill out the form on the left and click "Generate Poem" to create your AI-powered poetry
-                  </p>
+                <div className="whitespace-pre-wrap">{message.content}</div>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="max-w-[80%] p-3 rounded-lg bg-white dark:bg-gray-800 border shadow-sm">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Writing poetry...</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <form onSubmit={handleSubmit} className="mt-auto p-2 bg-white dark:bg-gray-800 rounded-b-lg border-t">
+          <div className="flex gap-2">
+            <Textarea
+              placeholder="Describe what kind of poetry you'd like... (e.g., 'Write me a haiku about autumn')"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="flex-1 min-h-[80px]"
+              disabled={isLoading}
+            />
+            <Button type="submit" className="h-auto" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+          
+          <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
+            <span>Powered by Gemini AI</span>
+            <button
+              type="button"
+              className="hover:underline"
+              onClick={() => setMessages([{
+                role: "assistant",
+                content: "Hello! I'm your poetry assistant. I can help you write, improve, or generate poetry. What would you like to create today?",
+              }])}
+            >
+              Clear conversation
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

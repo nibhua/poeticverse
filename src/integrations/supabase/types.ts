@@ -125,6 +125,42 @@ export type Database = {
           },
         ]
       }
+      challenge_votes: {
+        Row: {
+          challenge_response_id: string | null
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          challenge_response_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          challenge_response_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_votes_challenge_response_id_fkey"
+            columns: ["challenge_response_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
           created_at: string | null
@@ -267,6 +303,42 @@ export type Database = {
           },
           {
             foreignKeyName: "competition_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competition_votes: {
+        Row: {
+          competition_entry_id: string | null
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          competition_entry_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          competition_entry_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_votes_competition_entry_id_fkey"
+            columns: ["competition_entry_id"]
+            isOneToOne: false
+            referencedRelation: "competition_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_votes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -798,6 +870,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_content: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_expired_temporary_posts: {
         Args: Record<PropertyKey, never>
         Returns: undefined

@@ -43,13 +43,17 @@ export function VoteButton({
       const idField = type === "challenge" ? "challenge_response_id" : "competition_entry_id";
       const countTable = type === "challenge" ? "challenge_responses" : "competition_entries";
 
-      // Check if user already voted
-      const { data: existingVote } = await supabase
-        .from(table)
+      // Check if user already voted - using explicit type casting to avoid TypeScript errors
+      const { data: existingVote, error: checkError } = await supabase
+        .from(table as any)
         .select('*')
         .eq(idField, entryId)
         .eq('user_id', user.id)
         .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+        throw checkError;
+      }
 
       if (existingVote) {
         toast({
@@ -60,9 +64,9 @@ export function VoteButton({
         return;
       }
 
-      // Insert vote
+      // Insert vote - using explicit type casting to avoid TypeScript errors
       const { error: voteError } = await supabase
-        .from(table)
+        .from(table as any)
         .insert({
           [idField]: entryId,
           user_id: user.id,
