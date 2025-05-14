@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { VoteButton } from "@/components/ui/vote-button";
 
 export default function ChallengeDetails() {
   const { id } = useParams();
@@ -30,7 +31,7 @@ export default function ChallengeDetails() {
     },
   });
 
-  const { data: responses } = useQuery({
+  const { data: responses, refetch } = useQuery({
     queryKey: ["challenge-responses", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,9 +42,28 @@ export default function ChallengeDetails() {
       
       if (error) throw error;
       return data;
-    
     },
   });
+
+  const { data: userVotes } = useQuery({
+    queryKey: ["user-challenge-votes", id],
+    queryFn: async () => {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("challenge_votes")
+        .select("challenge_response_id")
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      return data.map(vote => vote.challenge_response_id);
+    },
+    enabled: !!id,
+  });
+
+  const isChallengeEnded = challenge ? (challenge.deadline ? new Date(challenge.deadline) < new Date() : false) : false;
+  const votedResponseIds = userVotes || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +83,7 @@ export default function ChallengeDetails() {
 
       toast.success("Response submitted successfully");
       setContent("");
+      refetch();
     } catch (error) {
       toast.error("Failed to submit response");
     } finally {
@@ -135,6 +156,7 @@ export default function ChallengeDetails() {
                     {challenge.deadline && (
                       <p>
                         <span className="font-medium">Deadline:</span> {new Date(challenge.deadline).toLocaleDateString()} at {new Date(challenge.deadline).toLocaleTimeString()}
+                        {isChallengeEnded && <span className="ml-2 text-red-500">(Ended)</span>}
                       </p>
                     )}
                     {challenge.is_paid && challenge.entry_fee && (
@@ -158,25 +180,27 @@ export default function ChallengeDetails() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-              <div className="border-t border-gray-100 pt-6">
-                <h3 className="text-xl font-semibold mb-4">Submit Your Response</h3>
-                <Textarea
-                  placeholder="Write your response here..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  required
-                  className="min-h-32"
-                />
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className="w-full mt-4"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Response"}
-                </Button>
-              </div>
-            </form>
+            {!isChallengeEnded && (
+              <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+                <div className="border-t border-gray-100 pt-6">
+                  <h3 className="text-xl font-semibold mb-4">Submit Your Response</h3>
+                  <Textarea
+                    placeholder="Write your response here..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    required
+                    className="min-h-32"
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting} 
+                    className="w-full mt-4"
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit Response"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
 
@@ -184,7 +208,7 @@ export default function ChallengeDetails() {
           <h2 className="text-2xl font-semibold">Responses</h2>
           {responses?.length ? (
             <div className="grid gap-4">
-              {responses.map((response) => (
+              {responses.map((response, index) => (
                 <motion.div
                   key={response.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -194,6 +218,15 @@ export default function ChallengeDetails() {
                   <Card className="overflow-hidden hover:shadow-md transition-shadow">
                     <CardContent className="p-5">
                       <div className="flex flex-col gap-3">
+                        {isChallengeEnded && index < 3 && (
+                          <div className={`inline-block px-2 py-1 mb-2 text-xs font-semibold rounded-full w-fit ${
+                            index === 0 ? 'bg-amber-100 text-amber-800' : 
+                            index === 1 ? 'bg-gray-200 text-gray-800' : 
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {index === 0 ? '1st Place 🏆' : index === 1 ? '2nd Place 🥈' : '3rd Place 🥉'}
+                          </div>
+                        )}
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
                             {response.user?.profile_pic_url ? (
@@ -214,7 +247,18 @@ export default function ChallengeDetails() {
                         </div>
                         <p className="whitespace-pre-wrap">{response.content}</p>
                         <div className="flex justify-between items-center text-sm text-muted-foreground">
-                          <span>Points: {response.points}</span>
+                          <div className="flex items-center gap-3">
+                            {isChallengeEnded ? (
+                              <span>Final Points: {response.points}</span>
+                            ) : (
+                              <VoteButton
+                                entryId={response.id}
+                                type="challenge"
+                                initialVotesCount={response.points || 0}
+                                hasVoted={votedResponseIds.includes(response.id)}
+                              />
+                            )}
+                          </div>
                           <span>{new Date(response.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>

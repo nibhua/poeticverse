@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { VoteButton } from "@/components/ui/vote-button";
 
 export default function CompetitionDetails() {
   const { id } = useParams();
@@ -26,7 +28,7 @@ export default function CompetitionDetails() {
     },
   });
 
-  const { data: entries } = useQuery({
+  const { data: entries, refetch } = useQuery({
     queryKey: ["competition-entries", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,6 +41,26 @@ export default function CompetitionDetails() {
       return data;
     },
   });
+
+  const { data: userVotes } = useQuery({
+    queryKey: ["user-competition-votes", id],
+    queryFn: async () => {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("competition_votes")
+        .select("competition_entry_id")
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      return data.map(vote => vote.competition_entry_id);
+    },
+    enabled: !!id,
+  });
+
+  const isCompetitionEnded = competition ? new Date(competition.end_date) < new Date() : false;
+  const votedEntryIds = userVotes || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +83,7 @@ export default function CompetitionDetails() {
         description: "Entry submitted successfully",
       });
       setContent("");
+      refetch();
     } catch (error) {
       toast({
         title: "Error",
@@ -92,28 +115,61 @@ export default function CompetitionDetails() {
           {competition.prize_description && (
             <p>Prize: {competition.prize_description}</p>
           )}
+          {isCompetitionEnded && (
+            <div className="p-3 bg-amber-100 border border-amber-300 rounded-md text-amber-800">
+              This competition has ended. No new entries can be submitted.
+            </div>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Textarea
-            placeholder="Write your entry here..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-          />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Entry"}
-          </Button>
-        </form>
+        {!isCompetitionEnded && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Textarea
+              placeholder="Write your entry here..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+            />
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Entry"}
+            </Button>
+          </form>
+        )}
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Entries</h2>
-          {entries?.map((entry) => (
+          {entries?.length === 0 && (
+            <div className="p-4 text-center text-gray-500 border rounded-lg">
+              No entries yet. Be the first to submit!
+            </div>
+          )}
+          {entries?.map((entry, index) => (
             <div key={entry.id} className="p-4 border rounded-lg">
+              {isCompetitionEnded && index < 3 && (
+                <div className={`inline-block px-2 py-1 mb-2 text-xs font-semibold rounded-full ${
+                  index === 0 ? 'bg-amber-100 text-amber-800' : 
+                  index === 1 ? 'bg-gray-200 text-gray-800' : 
+                  'bg-orange-100 text-orange-800'
+                }`}>
+                  {index === 0 ? '1st Place 🏆' : index === 1 ? '2nd Place 🥈' : '3rd Place 🥉'}
+                </div>
+              )}
               <p>{entry.content}</p>
-              <p className="mt-2 text-sm text-gray-500">
-                Votes: {entry.votes_count}
-              </p>
+              <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
+                <div>
+                  {isCompetitionEnded ? (
+                    <span>Final Votes: {entry.votes_count}</span>
+                  ) : (
+                    <VoteButton
+                      entryId={entry.id}
+                      type="competition"
+                      initialVotesCount={entry.votes_count || 0}
+                      hasVoted={votedEntryIds.includes(entry.id)}
+                    />
+                  )}
+                </div>
+                <span>Submitted: {new Date(entry.created_at).toLocaleDateString()}</span>
+              </div>
             </div>
           ))}
         </div>

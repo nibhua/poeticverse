@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
@@ -35,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/ui/Navbar";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import Contact from "@/pages/Contact";
+import PoetryAssistant from "@/pages/PoetryAssistant";
 
 // Configure QueryClient with default options
 const queryClient = new QueryClient({
@@ -197,6 +197,8 @@ function App() {
                       <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
                       <Route path="/challenges/create" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
                       <Route path="/challenges/:id" element={<ProtectedRoute><ChallengeDetails /></ProtectedRoute>} />
+
+                      <Route path="/poetry-assistant" element={<ProtectedRoute><PoetryAssistant /></ProtectedRoute>} />
                     </Routes>
                   </div>
                 </main>
