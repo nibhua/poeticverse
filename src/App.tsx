@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FloatingPoetryIcon } from "@/components/ui/floating-poetry-icon";
 import Index from "@/pages/Index";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -203,6 +204,7 @@ function App() {
                   </div>
                 </main>
               </div>
+              <FloatingPoetryIcon />
               <Toaster />
             </BrowserRouter>
           </div>

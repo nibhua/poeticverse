@@ -110,7 +110,7 @@ export function VoteButton({
       className={`flex items-center gap-1 ${userHasVoted ? 'bg-primary/10 text-primary' : ''}`}
     >
       <ThumbsUp className={`h-4 w-4 ${userHasVoted ? 'fill-primary' : ''}`} />
-      <span>{votesCount}</span>
+      <span className="ml-1">{votesCount}</span>
     </Button>
   );
 }
