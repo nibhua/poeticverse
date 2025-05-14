@@ -12,7 +12,7 @@ export default function Competitions() {
   const [searchTerm, setSearchTerm] = useState("");
   const searchRef = useRef<HTMLDivElement>(null);
   
-  // Modified to include counts
+  // Fix the count parameter type issue
   const { data: competitions, isLoading } = useQuery({
     queryKey: ["competitions"],
     queryFn: async () => {
@@ -28,7 +28,7 @@ export default function Competitions() {
         competitionsData.map(async (competition) => {
           const { count, error: countError } = await supabase
             .from("competition_entries")
-            .select("*", { count: true, head: true })
+            .select("*", { count: "exact", head: true })
             .eq("competition_id", competition.id);
           
           return {

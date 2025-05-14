@@ -48,12 +48,13 @@ export default function CompetitionDetails() {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) return [];
       
-      // Using type assertion to avoid TypeScript errors
+      // Fix the type error by using an explicit type for the table name
       const { data, error } = await supabase
-        .from("competition_votes" as any)
+        .from("competition_votes")
         .select("competition_entry_id");
       
       if (error) throw error;
+      // Make sure we handle undefined/null values
       return data?.map(vote => vote.competition_entry_id) || [];
     },
     enabled: !!id,

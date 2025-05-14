@@ -1,7 +1,8 @@
+
 import {
   Home,
   Book,
-  Audio,
+  Radio,
   Users,
   ListChecks,
   Trophy,
@@ -108,7 +109,7 @@ export function SidebarMenu() {
           <NavItem to="/books" icon={<Book />}>
             Books
           </NavItem>
-          <NavItem to="/audio" icon={<Audio />}>
+          <NavItem to="/audio" icon={<Radio />}>
             Audio
           </NavItem>
           <NavItem to="/workshops" icon={<Users />}>
