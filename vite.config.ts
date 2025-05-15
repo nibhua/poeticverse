@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    mode === 'production' ? react() : react({ plugins: [['@swc/plugin-emotion', {}]] }), 
+    mode === 'production' ? react() : react({ plugins: [['@swc/plugin-emotion', {}]] }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
