@@ -42,9 +42,9 @@ export const ProfileHeader = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="p-8 glass-card perspective-1000 transform-preserve-3d bg-gradient-to-br from-white/90 to-white/70 border-0"
+      className="p-4 sm:p-8 glass-card perspective-1000 transform-preserve-3d bg-gradient-to-br from-white/90 to-white/70 border-0"
     >
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -55,21 +55,21 @@ export const ProfileHeader = ({
           }}
           whileHover={{ scale: 1.05 }}
         >
-          <Avatar className="w-24 h-24 md:w-32 md:h-32 ring-4 ring-offset-2 ring-primary/20 shadow-lg">
+          <Avatar className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 ring-4 ring-offset-2 ring-primary/20 shadow-lg">
             <AvatarImage src={profilePicUrl || undefined} className="object-cover" />
             <AvatarFallback className="bg-gradient-to-br from-purple-400 to-primary">
-              <UserRound className="w-12 h-12 text-white" />
+              <UserRound className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
             </AvatarFallback>
           </Avatar>
         </motion.div>
 
-        <div className="flex-1">
-          <div className="flex items-center gap-4 mb-4 flex-wrap">
+        <div className="flex-1 w-full">
+          <div className="flex items-center gap-2 sm:gap-4 mb-4 flex-wrap">
             <motion.h1
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.4 }}
-              className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-700"
+              className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-700 break-all"
             >
               {username}
             </motion.h1>
@@ -79,14 +79,14 @@ export const ProfileHeader = ({
               transition={{ delay: 0.4, duration: 0.3 }}
             >
               {isCurrentUser ? (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => navigate(`/profile/${username}/edit`)}
-                    className="hover:bg-gray-100 rounded-full px-4 shadow-sm border border-gray-200"
+                    className="hover:bg-gray-100 rounded-full px-3 sm:px-4 shadow-sm border border-gray-200 text-xs sm:text-sm"
                   >
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     Edit Profile
                   </Button>
                   <ProfileSettings userId={userId} />
@@ -106,37 +106,37 @@ export const ProfileHeader = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="flex gap-8 mb-4 text-sm"
+            className="flex gap-2 sm:gap-4 md:gap-8 mb-4 text-sm overflow-x-auto pb-2"
           >
-            <div className="flex flex-col items-center px-4 py-2 bg-white/50 rounded-xl shadow-sm">
-              <span className="font-semibold text-lg text-gray-900">{postsCount}</span>
-              <span className="text-gray-500">posts</span>
+            <div className="flex flex-col items-center px-2 sm:px-4 py-2 bg-white/50 rounded-xl shadow-sm min-w-0 flex-shrink-0">
+              <span className="font-semibold text-sm sm:text-lg text-gray-900 truncate">{postsCount}</span>
+              <span className="text-gray-500 text-xs sm:text-sm truncate">posts</span>
             </div>
             <button 
-              className="flex flex-col items-center px-4 py-2 bg-white/50 rounded-xl shadow-sm hover:bg-white/80 transition-colors"
+              className="flex flex-col items-center px-2 sm:px-4 py-2 bg-white/50 rounded-xl shadow-sm hover:bg-white/80 transition-colors min-w-0 flex-shrink-0"
               onClick={() => setShowFollowers(true)}
             >
-              <span className="font-semibold text-lg text-gray-900">{currentFollowersCount}</span>
-              <span className="text-gray-500">followers</span>
+              <span className="font-semibold text-sm sm:text-lg text-gray-900 truncate">{currentFollowersCount}</span>
+              <span className="text-gray-500 text-xs sm:text-sm truncate">followers</span>
             </button>
             <button 
-              className="flex flex-col items-center px-4 py-2 bg-white/50 rounded-xl shadow-sm hover:bg-white/80 transition-colors"
+              className="flex flex-col items-center px-2 sm:px-4 py-2 bg-white/50 rounded-xl shadow-sm hover:bg-white/80 transition-colors min-w-0 flex-shrink-0"
               onClick={() => setShowFollowing(true)}
             >
-              <span className="font-semibold text-lg text-gray-900">{followingCount}</span>
-              <span className="text-gray-500">following</span>
+              <span className="font-semibold text-sm sm:text-lg text-gray-900 truncate">{followingCount}</span>
+              <span className="text-gray-500 text-xs sm:text-sm truncate">following</span>
             </button>
           </motion.div>
 
           {(fullName || bio) && (
             <motion.div 
-              className="p-4 bg-white/70 rounded-lg shadow-sm backdrop-blur-sm"
+              className="p-3 sm:p-4 bg-white/70 rounded-lg shadow-sm backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.4 }}
             >
-              {fullName && <div className="font-semibold mb-2 text-gray-800">{fullName}</div>}
-              {bio && <div className="whitespace-pre-wrap text-gray-600 leading-relaxed">{bio}</div>}
+              {fullName && <div className="font-semibold mb-2 text-gray-800 text-sm sm:text-base break-words">{fullName}</div>}
+              {bio && <div className="whitespace-pre-wrap text-gray-600 leading-relaxed text-sm sm:text-base break-words">{bio}</div>}
             </motion.div>
           )}
         </div>

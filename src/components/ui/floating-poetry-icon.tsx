@@ -8,7 +8,7 @@ export const FloatingPoetryIcon = () => {
   return (
     <Link to="/poetry-assistant">
       <motion.div
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg hover:shadow-xl"
+        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg hover:shadow-xl"
         initial={{ scale: 0, rotate: 0 }}
         animate={{ 
           scale: 1, 
@@ -28,16 +28,17 @@ export const FloatingPoetryIcon = () => {
         }}
         whileHover={{ 
           scale: 1.1,
-          boxShadow: "0 0 15px rgba(139, 92, 246, 0.8)" 
+          boxShadow: "0 0 20px rgba(139, 92, 246, 0.8)" 
         }}
         whileTap={{ scale: 0.9 }}
       >
-        <div className="relative flex items-center justify-center">
-          <Book className="h-6 w-6 text-white" />
+        <div className="relative flex flex-col items-center justify-center">
+          <Book className="h-6 w-6 text-white mb-1" />
+          <span className="text-xs font-bold text-white">Poets AI</span>
           <motion.div
             className="absolute h-full w-full rounded-full border-2 border-white opacity-60"
             animate={{
-              scale: [1, 1.2, 1],
+              scale: [1, 1.3, 1],
               opacity: [0.6, 0.2, 0.6],
             }}
             transition={{
