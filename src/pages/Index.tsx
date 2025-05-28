@@ -123,7 +123,7 @@ export default function Index() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-6 sm:py-8 space-y-6">
       {/* Story/Temporary Posts Row */}
       {temporaryPosts && temporaryPosts.length > 0 && (
         <motion.div
@@ -230,30 +230,32 @@ export default function Index() {
         </motion.div>
       ) : (
         <motion.div 
-          className="grid gap-6"
+          className="w-full max-w-[600px] mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {posts?.map((post) => (
-            <motion.div
-              key={post.id}
-              className="card-3d group perspective-1000"
-              variants={itemVariants}
-            >
-              <Post 
-                postId={post.id}
-                username={post.profiles?.username || "Unknown"}
-                content={post.content_text || post.caption || ""}
-                timestamp={new Date(post.created_at).toLocaleDateString()}
-                imageUrl={post.image_url || undefined}
-                likes={post.likes || 0}
-                comments={post.comments || 0}
-                profilePicUrl={post.profiles?.profile_pic_url || undefined}
-                userId={post.user_id}
-              />
-            </motion.div>
-          ))}
+          <div className="space-y-6">
+            {posts?.map((post) => (
+              <motion.div
+                key={post.id}
+                className="card-3d group perspective-1000"
+                variants={itemVariants}
+              >
+                <Post 
+                  postId={post.id}
+                  username={post.profiles?.username || "Unknown"}
+                  content={post.content_text || post.caption || ""}
+                  timestamp={new Date(post.created_at).toLocaleDateString()}
+                  imageUrl={post.image_url || undefined}
+                  likes={post.likes || 0}
+                  comments={post.comments || 0}
+                  profilePicUrl={post.profiles?.profile_pic_url || undefined}
+                  userId={post.user_id}
+                />
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       )}
     </div>
