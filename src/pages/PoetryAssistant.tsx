@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Send, Loader2, Book } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -28,14 +27,21 @@ export default function PoetryAssistant() {
       'shayari', 'ghazal', 'nazm', 'rubai', 'qawwali', 'doha', 'sher', 'couplet',
       'metaphor', 'simile', 'alliteration', 'rhythm', 'meter', 'ballad', 'ode', 'elegy',
       'write', 'compose', 'create', 'generate', 'emotion', 'love', 'sad', 'happy', 'romantic',
-      'urdu', 'hindi', 'english', 'arabic', 'persian', 'literature', 'literary'
+      'urdu', 'hindi', 'english', 'arabic', 'persian', 'literature', 'literary', 'author',
+      'book', 'story', 'novel', 'writing', 'creative', 'inspiring', 'beautiful', 'heart',
+      'feeling', 'express', 'art', 'artistic', 'verse', 'line', 'quote', 'famous'
     ];
     
     const lowerText = text.toLowerCase();
-    return poetryKeywords.some(keyword => lowerText.includes(keyword)) || 
-           lowerText.includes('write') || 
-           lowerText.includes('create') || 
-           lowerText.includes('generate');
+    
+    // Check for greetings - these are allowed
+    const greetings = ['hi', 'hello', 'hey', 'good morning', 'good evening', 'namaste', 'salaam'];
+    if (greetings.some(greeting => lowerText.includes(greeting))) {
+      return true;
+    }
+    
+    // Check for poetry-related keywords
+    return poetryKeywords.some(keyword => lowerText.includes(keyword));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,13 +49,18 @@ export default function PoetryAssistant() {
     
     if (!prompt.trim()) return;
 
-    // Check if the prompt is poetry-related
+    // Check if the prompt is poetry-related or a greeting
     if (!isPoetryRelated(prompt)) {
-      toast({
-        title: "Poetry Focus Only",
-        description: "I'm Poets AI - I only assist with poetry, shayari, and literature. Please ask me about poems, poets, or creative writing!",
-        variant: "destructive",
-      });
+      const defaultMessage = "I'm Poets AI - I only assist with poetry, shayari, and literature! 🌟\n\nI can help you with:\n• Write beautiful shayari in any language\n• Find famous poets and their works\n• Create poems based on emotions\n• Poetry analysis and techniques\n• Generate romantic, sad, or happy verses\n\nWhat kind of poetry would you like to explore?";
+      
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: defaultMessage,
+      };
+      
+      const userMessage: Message = { role: "user", content: prompt };
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      setPrompt("");
       return;
     }
     
@@ -59,41 +70,28 @@ export default function PoetryAssistant() {
     setIsLoading(true);
     
     try {
-      // Enhanced poetry-focused system prompt
-      const systemPrompt = `You are Poets AI, a specialized poetry assistant. You ONLY respond to poetry, literature, and creative writing related queries. Your expertise includes:
+      // Create the enhanced poetry prompt for the AI
+      const enhancedPrompt = `You are Poets AI, a specialized poetry assistant. You ONLY respond to poetry, literature, and creative writing queries.
 
-1. Writing and improving poetry, shayari, ghazals, and all forms of verse
-2. Information about famous poets and their works
-3. Generating shayari in any language (Urdu, Hindi, English, Arabic, Persian, etc.)
-4. Creating poems based on emotions, themes, or prompts
-5. Poetry analysis, techniques, and literary devices
-6. Help with rhyme schemes, meter, and poetic forms
+User Query: ${prompt}
 
-IMPORTANT RESTRICTIONS:
-- ONLY answer questions related to poetry, poets, literature, and creative writing
-- If asked about programming, math, science, or any non-poetry topic, politely redirect to poetry
-- Always maintain a poetic, artistic, and inspiring tone
-- When generating shayari or poems, be creative and emotionally resonant
+Instructions:
+- If this is about poetry, shayari, literature, or creative writing, provide a helpful, creative response
+- Generate beautiful, meaningful poetry that touches the heart
+- Help with any poetry-related questions, poet information, or literary analysis
+- Be poetic, artistic, and inspiring in your responses
+- If generating shayari or poems, make them emotionally resonant and beautiful
 
-Generate beautiful, meaningful poetry that touches the heart.`;
+Please respond with poetry-focused content only.`;
 
-      // Prepare the context with poetry focus
-      const messageHistory = [
-        {
-          role: "system",
-          parts: [{ text: systemPrompt }]
-        },
-        ...messages.map(msg => ({
-          role: msg.role,
-          parts: [{ text: msg.content }]
-        })),
+      // Prepare messages for Gemini API (without system role)
+      const apiMessages = [
         {
           role: "user",
-          parts: [{ text: prompt }]
+          parts: [{ text: enhancedPrompt }]
         }
       ];
       
-      // Set up the request for Gemini API
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBQBABdgWaSX8qqjO9Tc0qcySppaePgu4s",
         {
@@ -102,7 +100,7 @@ Generate beautiful, meaningful poetry that touches the heart.`;
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            contents: messageHistory,
+            contents: apiMessages,
             generationConfig: {
               temperature: 0.8,
               maxOutputTokens: 800,
@@ -118,12 +116,7 @@ Generate beautiful, meaningful poetry that touches the heart.`;
       }
       
       let assistantResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
-        "Sorry, I couldn't generate a poetry response at this time.";
-      
-      // Double-check if the response seems to be about non-poetry topics
-      if (!isPoetryRelated(assistantResponse) && !assistantResponse.includes("poetry") && !assistantResponse.includes("poem")) {
-        assistantResponse = "I'm Poets AI, your dedicated poetry assistant! I focus exclusively on poetry, shayari, literature, and creative writing. Please ask me about poems, poets, writing techniques, or let me create beautiful verses for you. What kind of poetry would you like to explore? 🌟";
-      }
+        "Sorry, I couldn't generate a poetry response at this time. Please try asking about poems, shayari, or poets!";
       
       const assistantMessage: Message = {
         role: "assistant",
@@ -132,12 +125,21 @@ Generate beautiful, meaningful poetry that touches the heart.`;
       
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: any) {
+      console.error("Poetry generation error:", error);
+      
+      // Provide a fallback poetry response
+      const fallbackMessage: Message = {
+        role: "assistant",
+        content: "I'm having trouble connecting right now, but I'm here to help with poetry! 🌟\n\nTry asking me:\n• 'Write a romantic shayari in Urdu'\n• 'Tell me about Mirza Ghalib'\n• 'Create a poem about happiness'\n• 'Generate a sad poem'\n\nWhat would you like to explore in poetry?",
+      };
+      
+      setMessages((prev) => [...prev, fallbackMessage]);
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate poetry. Please try again.",
+        title: "Connection Issue",
+        description: "Having trouble connecting, but I'm still here to help with poetry!",
         variant: "destructive",
       });
-      console.error("Poetry generation error:", error);
     } finally {
       setIsLoading(false);
     }
