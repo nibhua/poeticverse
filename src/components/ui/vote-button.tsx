@@ -30,6 +30,11 @@ export function VoteButton({
     checkUserVote();
   }, [entryId, type]);
 
+  // Update local count when initial count changes
+  useEffect(() => {
+    setVotesCount(initialVotesCount);
+  }, [initialVotesCount]);
+
   const checkUserVote = async () => {
     try {
       const user = (await supabase.auth.getUser()).data.user;
@@ -38,17 +43,12 @@ export function VoteButton({
       const table = type === "challenge" ? "challenge_votes" : "competition_votes";
       const idField = type === "challenge" ? "challenge_response_id" : "competition_entry_id";
 
-      const { data: existingVote, error } = await supabase
+      const { data: existingVote } = await supabase
         .from(table as any)
-        .select('*')
+        .select('id')
         .eq(idField, entryId)
         .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error checking vote:", error);
-        return;
-      }
+        .maybeSingle();
 
       setUserHasVoted(!!existingVote);
     } catch (error) {
@@ -57,6 +57,8 @@ export function VoteButton({
   };
 
   const handleVote = async () => {
+    if (isVoting) return;
+    
     try {
       setIsVoting(true);
       
@@ -72,29 +74,19 @@ export function VoteButton({
 
       const table = type === "challenge" ? "challenge_votes" : "competition_votes";
       const idField = type === "challenge" ? "challenge_response_id" : "competition_entry_id";
-      const countTable = type === "challenge" ? "challenge_responses" : "competition_entries";
-      const countField = type === "challenge" ? "points" : "votes_count";
 
       if (userHasVoted) {
         // Remove vote
-        const { error: deleteError } = await supabase
+        const { error } = await supabase
           .from(table as any)
           .delete()
           .eq(idField, entryId)
           .eq('user_id', user.id);
 
-        if (deleteError) throw deleteError;
+        if (error) throw error;
 
-        // Decrease vote count
-        const { error: updateError } = await supabase
-          .from(countTable)
-          .update({ [countField]: Math.max(0, votesCount - 1) })
-          .eq('id', entryId);
-
-        if (updateError) throw updateError;
-
-        setVotesCount(prevCount => Math.max(0, prevCount - 1));
         setUserHasVoted(false);
+        setVotesCount(prev => Math.max(0, prev - 1));
         
         toast({
           title: "Vote removed",
@@ -102,31 +94,40 @@ export function VoteButton({
         });
       } else {
         // Add vote
-        const { error: voteError } = await supabase
+        const { error } = await supabase
           .from(table as any)
           .insert({
             [idField]: entryId,
             user_id: user.id,
           });
 
-        if (voteError) throw voteError;
+        if (error) throw error;
 
-        // Increase vote count
-        const { error: updateError } = await supabase
-          .from(countTable)
-          .update({ [countField]: votesCount + 1 })
-          .eq('id', entryId);
-
-        if (updateError) throw updateError;
-
-        setVotesCount(prevCount => prevCount + 1);
         setUserHasVoted(true);
+        setVotesCount(prev => prev + 1);
         
         toast({
           title: "Vote submitted",
           description: "Your vote has been recorded.",
         });
       }
+
+      // Refresh the actual count from database after a short delay
+      setTimeout(async () => {
+        const countTable = type === "challenge" ? "challenge_responses" : "competition_entries";
+        const countField = type === "challenge" ? "points" : "votes_count";
+        
+        const { data } = await supabase
+          .from(countTable)
+          .select(countField)
+          .eq('id', entryId)
+          .single();
+        
+        if (data) {
+          setVotesCount(data[countField] || 0);
+        }
+      }, 500);
+
     } catch (error) {
       toast({
         title: "Error",
@@ -145,11 +146,15 @@ export function VoteButton({
       size="sm"
       onClick={handleVote}
       disabled={isVoting || disabled}
-      className={`flex items-center gap-1 ${userHasVoted ? 'bg-primary/10 text-primary border-primary' : ''}`}
+      className={`flex items-center gap-2 ${
+        userHasVoted 
+          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' 
+          : 'hover:bg-gray-50'
+      }`}
     >
-      <ThumbsUp className={`h-4 w-4 ${userHasVoted ? 'fill-primary' : ''}`} />
-      <span className="ml-1">{votesCount}</span>
-      {isVoting && <span className="ml-1 text-xs">...</span>}
+      <ThumbsUp className={`h-4 w-4 ${userHasVoted ? 'fill-blue-600' : ''}`} />
+      <span>{votesCount}</span>
+      {isVoting && <span className="text-xs">...</span>}
     </Button>
   );
 }
