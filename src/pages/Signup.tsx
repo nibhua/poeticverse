@@ -17,35 +17,83 @@ const Signup = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password || !username) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Create user in auth
+      console.log("Starting signup process...");
+      
+      // Sign up with email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            username: username,
+            full_name: username
+          }
+        }
       });
 
-      if (authError) throw authError;
+      console.log("Auth response:", { authData, authError });
 
-      // Create profile
-      if (authData.user) {
-        const { error: profileError } = await supabase.from("profiles").insert({
-          id: authData.user.id,
-          username,
-        });
-
-        if (profileError) {
-          // If profile creation fails, delete the auth user
-          await supabase.auth.admin.deleteUser(authData.user.id);
-          throw profileError;
+      if (authError) {
+        console.error("Auth error:", authError);
+        
+        // Handle specific error cases
+        if (authError.message.includes("User already registered")) {
+          toast.error("An account with this email already exists. Please try logging in instead.");
+          return;
+        } else if (authError.message.includes("Invalid email")) {
+          toast.error("Please enter a valid email address");
+          return;
+        } else if (authError.message.includes("Password should be at least")) {
+          toast.error("Password should be at least 6 characters long");
+          return;
         }
-
-        toast.success("Successfully signed up! Check your email for verification.");
-        navigate("/");
+        
+        toast.error(authError.message || "An error occurred during signup");
+        return;
       }
+
+      // Check if user was created but needs email confirmation
+      if (authData.user && !authData.session) {
+        console.log("User created, email confirmation required");
+        toast.success("Account created! Please check your email for a confirmation link before logging in.");
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+        return;
+      }
+
+      // If user is immediately logged in (email confirmation disabled)
+      if (authData.user && authData.session) {
+        console.log("User signed up and logged in immediately");
+        toast.success("Account created successfully! Welcome to Poeticverse!");
+        navigate("/");
+        return;
+      }
+
+      // Fallback case
+      toast.success("Account created! Please check your email for further instructions.");
+      navigate("/login");
+
     } catch (error: any) {
-      toast.error(error.message || "An error occurred during signup");
+      console.error("Signup error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,12 +102,22 @@ const Signup = () => {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
+      console.log("Starting Google signup...");
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        }
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Google auth error:", error);
+        toast.error(error.message || "An error occurred with Google signup");
+      }
     } catch (error: any) {
-      toast.error(error.message || "An error occurred with Google signup");
+      console.error("Google signup error:", error);
+      toast.error("An error occurred with Google signup");
     } finally {
       setLoading(false);
     }
@@ -111,6 +169,7 @@ const Signup = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10 h-12 rounded-xl search-modern"
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="relative">
@@ -122,17 +181,20 @@ const Signup = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 h-12 rounded-xl search-modern"
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="password"
-                  placeholder="Password"
+                  placeholder="Password (at least 6 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 h-12 rounded-xl search-modern"
                   required
+                  disabled={loading}
+                  minLength={6}
                 />
               </div>
             </motion.div>
