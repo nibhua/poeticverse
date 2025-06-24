@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VoteButton } from "@/components/ui/vote-button";
 
 export default function CompetitionDetails() {
@@ -28,7 +28,7 @@ export default function CompetitionDetails() {
     },
   });
 
-  const { data: entries, refetch } = useQuery({
+  const { data: entries, refetch: refetchEntries } = useQuery({
     queryKey: ["competition-entries", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -42,23 +42,60 @@ export default function CompetitionDetails() {
     },
   });
 
-  const { data: userVotes } = useQuery({
+  const { data: userVotes, refetch: refetchUserVotes } = useQuery({
     queryKey: ["user-competition-votes", id],
     queryFn: async () => {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) return [];
       
-      // Fix the type error by using an explicit type for the table name
       const { data, error } = await supabase
         .from("competition_votes")
-        .select("competition_entry_id");
+        .select("competition_entry_id")
+        .eq("user_id", user.id);
       
       if (error) throw error;
-      // Make sure we handle undefined/null values
       return data?.map(vote => vote.competition_entry_id) || [];
     },
     enabled: !!id,
   });
+
+  // Set up real-time subscription for competition entries
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`competition-entries-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'competition_entries',
+          filter: `competition_id=eq.${id}`
+        },
+        () => {
+          // Refresh entries when any entry is updated
+          refetchEntries();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'competition_votes'
+        },
+        () => {
+          // Refresh user votes when votes change
+          refetchUserVotes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, refetchEntries, refetchUserVotes]);
 
   const isCompetitionEnded = competition ? new Date(competition.end_date) < new Date() : false;
   const votedEntryIds = userVotes || [];
@@ -84,7 +121,7 @@ export default function CompetitionDetails() {
         description: "Entry submitted successfully",
       });
       setContent("");
-      refetch();
+      refetchEntries();
     } catch (error) {
       toast({
         title: "Error",

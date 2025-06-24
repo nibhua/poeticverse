@@ -1,11 +1,10 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -31,7 +30,7 @@ export default function ChallengeDetails() {
     },
   });
 
-  const { data: responses, refetch } = useQuery({
+  const { data: responses, refetch: refetchResponses } = useQuery({
     queryKey: ["challenge-responses", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -45,7 +44,7 @@ export default function ChallengeDetails() {
     },
   });
 
-  const { data: userVotes } = useQuery({
+  const { data: userVotes, refetch: refetchUserVotes } = useQuery({
     queryKey: ["user-challenge-votes", id],
     queryFn: async () => {
       const user = (await supabase.auth.getUser()).data.user;
@@ -61,6 +60,44 @@ export default function ChallengeDetails() {
     },
     enabled: !!id,
   });
+
+  // Set up real-time subscription for challenge responses
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`challenge-responses-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'challenge_responses',
+          filter: `challenge_id=eq.${id}`
+        },
+        () => {
+          // Refresh responses when any response is updated
+          refetchResponses();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'challenge_votes'
+        },
+        () => {
+          // Refresh user votes when votes change
+          refetchUserVotes();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, refetchResponses, refetchUserVotes]);
 
   const isChallengeEnded = challenge ? (challenge.deadline ? new Date(challenge.deadline) < new Date() : false) : false;
   const votedResponseIds = userVotes || [];
@@ -83,7 +120,7 @@ export default function ChallengeDetails() {
 
       toast.success("Response submitted successfully");
       setContent("");
-      refetch();
+      refetchResponses();
     } catch (error) {
       toast.error("Failed to submit response");
     } finally {

@@ -35,6 +35,51 @@ export function VoteButton({
     setVotesCount(initialVotesCount);
   }, [initialVotesCount]);
 
+  // Set up real-time subscription for vote updates
+  useEffect(() => {
+    const voteTable = type === "challenge" ? "challenge_votes" : "competition_votes";
+    const entryTable = type === "challenge" ? "challenge_responses" : "competition_entries";
+    const countField = type === "challenge" ? "points" : "votes_count";
+    
+    // Subscribe to vote changes for real-time updates
+    const voteChannel = supabase
+      .channel(`votes-${type}-${entryId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: voteTable,
+          filter: type === "challenge" ? `challenge_response_id=eq.${entryId}` : `competition_entry_id=eq.${entryId}`
+        },
+        () => {
+          // Refresh vote count and user vote status when votes change
+          refreshVoteCount();
+          checkUserVote();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: entryTable,
+          filter: `id=eq.${entryId}`
+        },
+        (payload) => {
+          // Update vote count when the entry count is updated by triggers
+          if (payload.new && payload.new[countField] !== undefined) {
+            setVotesCount(payload.new[countField]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(voteChannel);
+    };
+  }, [entryId, type]);
+
   const checkUserVote = async () => {
     try {
       const user = (await supabase.auth.getUser()).data.user;
@@ -53,6 +98,25 @@ export function VoteButton({
       setUserHasVoted(!!existingVote);
     } catch (error) {
       console.error("Error checking user vote:", error);
+    }
+  };
+
+  const refreshVoteCount = async () => {
+    try {
+      const countTable = type === "challenge" ? "challenge_responses" : "competition_entries";
+      const countField = type === "challenge" ? "points" : "votes_count";
+      
+      const { data } = await supabase
+        .from(countTable)
+        .select(countField)
+        .eq('id', entryId)
+        .single();
+      
+      if (data) {
+        setVotesCount(data[countField] || 0);
+      }
+    } catch (error) {
+      console.error("Error refreshing vote count:", error);
     }
   };
 
@@ -85,9 +149,6 @@ export function VoteButton({
 
         if (error) throw error;
 
-        setUserHasVoted(false);
-        setVotesCount(prev => Math.max(0, prev - 1));
-        
         toast({
           title: "Vote removed",
           description: "Your vote has been removed.",
@@ -103,30 +164,15 @@ export function VoteButton({
 
         if (error) throw error;
 
-        setUserHasVoted(true);
-        setVotesCount(prev => prev + 1);
-        
         toast({
           title: "Vote submitted",
           description: "Your vote has been recorded.",
         });
       }
 
-      // Refresh the actual count from database after a short delay
-      setTimeout(async () => {
-        const countTable = type === "challenge" ? "challenge_responses" : "competition_entries";
-        const countField = type === "challenge" ? "points" : "votes_count";
-        
-        const { data } = await supabase
-          .from(countTable)
-          .select(countField)
-          .eq('id', entryId)
-          .single();
-        
-        if (data) {
-          setVotesCount(data[countField] || 0);
-        }
-      }, 500);
+      // The real-time subscription will handle updating the UI
+      // but we can immediately update the local state for responsiveness
+      setUserHasVoted(!userHasVoted);
 
     } catch (error) {
       toast({
